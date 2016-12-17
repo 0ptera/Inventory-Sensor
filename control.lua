@@ -13,8 +13,11 @@ end)
 
 script.on_configuration_changed(function(data)
   global.ItemSensors = global.ItemSensors or {} 
-  for k, itemSensor in pairs(global.ItemSensors) do
+  for i=1, #global.ItemSensors do
+    local itemSensor = global.ItemSensors[i]
     itemSensor.ID = itemSensor.Sensor.unit_number
+    itemSensor.ConnectedEntity, itemSensor.SkipEntityScanning = getConnectedEntity(itemSensor.Sensor)  
+    itemSensor.Inventory = setInventory(itemSensor.ConnectedEntity)
   end
 end)
 
@@ -61,11 +64,13 @@ function ticker(event)
 	if global.ItemSensors ~= nil and #global.ItemSensors > 0 then
   local tick = game.tick
 		for i=1, #global.ItemSensors do
-			if (i + tick) % find_entity_interval == 0 then
-				global.ItemSensors[i].ConnectedEntity = getConnectedEntity(global.ItemSensors[i].Sensor)	
+      local itemSensor = global.ItemSensors[i]
+			if not itemSensor.SkipEntityScanning and (i + tick) % find_entity_interval == 0 then
+				itemSensor.ConnectedEntity, itemSensor.SkipEntityScanning = getConnectedEntity(itemSensor.Sensor)
+        itemSensor.Inventory = setInventory(itemSensor.ConnectedEntity)
 			end				
 			if (i + tick) % update_interval == 0 then
-				setInventory(global.ItemSensors[i])
+				updateSensor(itemSensor)
 			end
 		end	
 	else
@@ -87,9 +92,10 @@ function CreateItemSensor(entity)
 	local itemSensor = {}
   itemSensor.ID = entity.unit_number
   itemSensor.Sensor = entity
-  itemSensor.ConnectedEntity = getConnectedEntity(entity)
-  
-	table.insert(global.ItemSensors, itemSensor)  
+  itemSensor.ConnectedEntity, itemSensor.SkipEntityScanning = getConnectedEntity(entity)  
+  itemSensor.Inventory = setInventory(itemSensor.ConnectedEntity)
+
+	global.ItemSensors[#global.ItemSensors+1] = itemSensor
 end
 
 function removeItemSensor(entity)
@@ -117,32 +123,74 @@ function getConnectedEntity(sensor)
   if connectedEntities then
   for i=1, #connectedEntities do
     local entity = connectedEntities[i]
-    if (entity.valid and (entity.type == "furnace" or entity.type == "assembling-machine" or entity.type == "roboport" 
-    or entity.type == "locomotive" or entity.type == "cargo-wagon" or entity.type == "car")) then
-      return entity      
+    if entity.valid then
+      if entity.type == "furnace" or entity.type == "assembling-machine" or entity.type == "roboport" then    
+        return entity, true
+      elseif entity.type == "locomotive" or entity.type == "cargo-wagon" or entity.type == "car" then
+        return entity, false
+      end
     end
   end
   end
 end
 
-function setInventory(itemSensor)
+-- returns array of inventories
+function setInventory(entity)
+  local inventory = {}
+  if entity and entity.valid then
+    if entity.type == "locomotive" then
+      inventory[1] = entity.get_inventory(defines.inventory.fuel)
+    elseif entity.type == "cargo-wagon" then
+      inventory[1] = entity.get_inventory(defines.inventory.cargo_wagon)
+    elseif entity.type == "car" then
+      for i=1, 4, 1 do
+        local tempInv = entity.get_inventory(i)
+        if tempInv then
+          inventory[#inventory+1] = tempInv
+        end
+      end
+    elseif entity.type == "assembling-machine" then
+      for i=1, 4, 1 do
+        local tempInv = entity.get_inventory(i)
+        if tempInv then
+          inventory[#inventory+1] = tempInv
+        end
+      end  
+    elseif entity.type == "furnace" then
+      for i=1, 4, 1 do
+        local tempInv = entity.get_inventory(i)
+        if tempInv then
+          inventory[#inventory+1] = tempInv
+        end
+      end
+    elseif entity.type == "roboport" then
+      for i=1, 2, 1 do
+        local tempInv = entity.get_inventory(i)
+        if tempInv then
+          inventory[#inventory+1] = tempInv
+        end
+      end
+    end
+  end
+  return inventory
+end
+
+function updateSensor(itemSensor)
 	local sensor = itemSensor.Sensor
 	local connectedEntity = itemSensor.ConnectedEntity
-	
-	local inventory = {}
-	local signals = {}
-	local EntityDetected = false
-	
-	-- return empty inventory
-	if connectedEntity ==nil then
+
+	-- clear output of invalid connections
+	if not connectedEntity or not connectedEntity.valid or not itemSensor.Inventory or #itemSensor.Inventory < 1 then
+    itemSensor.ConnectedEntity = nil
+    itemSensor.Inventory = {}
+    itemSensor.SkipEntityScanning = false
 		sensor.get_control_behavior().parameters = nil
 		return
 	end
-	
-	if not connectedEntity.valid then
-		sensor.get_control_behavior().parameters = nil
-		return	
-	end
+
+	local contents = {}
+	local signals = {}
+	local EntityDetected = false
 
 	-- get locomotive inventory
 	if connectedEntity.type == "locomotive" then
@@ -151,36 +199,33 @@ function setInventory(itemSensor)
 		or connectedEntity.train.state == defines.train_state.manual_control then --keeps showing inventory for find_entity_interval ticks after movement start > neglect able
 			EntityDetected = true
 			signals[1] = {index=1,signal={type="virtual",name="detected-locomotive"},count=1}
-			-- I have yet to see a mod with locomotive cargo inventory
-      if connectedEntity.get_inventory(defines.inventory.fuel) then
-        inventory = connectedEntity.get_inventory(defines.inventory.fuel).get_contents()
-      end
+			contents = itemSensor.Inventory[1].get_contents()
 		else -- train is moving > remove connection
-			connectedEntity = nil
+      itemSensor.ConnectedEntity = nil
+      itemSensor.Inventory = {}
+      itemSensor.SkipEntityScanning = false
 			sensor.get_control_behavior().parameters = nil
 			return
-		end
-	end
+		end	
 	
 	-- get traincar inventory
-	if connectedEntity.type == "cargo-wagon" then
+	elseif connectedEntity.type == "cargo-wagon" then
 		if connectedEntity.train.state == defines.train_state.wait_station or 
 		  connectedEntity.train.state == defines.train_state.wait_signal or 
 		  connectedEntity.train.state == defines.train_state.manual_control then --keeps showing inventory for find_entity_interval ticks after movement start > neglect able
 			EntityDetected = true
 			signals[1] = {index=1,signal={type="virtual",name="detected-wagon"},count=1}
-			if connectedEntity.get_inventory(defines.inventory.cargo_wagon) then
-				inventory = connectedEntity.get_inventory(defines.inventory.cargo_wagon).get_contents()  
-			end
+      contents = itemSensor.Inventory[1].get_contents()
 		else -- train is moving > remove connection
-			connectedEntity = nil
+      itemSensor.ConnectedEntity = nil
+      itemSensor.Inventory = {}
+      itemSensor.SkipEntityScanning = false
 			sensor.get_control_behavior().parameters = nil
 			return
 		end
-	end
 
 	-- get car/tank inventory
-	if connectedEntity.type == "car" then
+	elseif connectedEntity.type == "car" then
 		if tostring(connectedEntity.speed) == "0" then --car isn't moving
 			EntityDetected = true
 			if connectedEntity.name == "tank" then
@@ -188,49 +233,42 @@ function setInventory(itemSensor)
 			else
 				signals[1] = {index=1,signal={type="virtual",name="detected-car"},count=1}
 			end
-			for i=1, 4, 1 do
-				if connectedEntity.get_inventory(i) then
-					local contentsTable = connectedEntity.get_inventory(i).get_contents()
-					for k,v in pairs(contentsTable) do
-						inventory = add_detected_items(inventory, k, v)						
-					end		  
-				end
+			for i=1, #itemSensor.Inventory, 1 do
+        local contentsTable = itemSensor.Inventory[i].get_contents()
+        for k,v in pairs(contentsTable) do
+          contents = add_detected_items(contents, k, v)						
+        end		  				
 			end
 		else -- car is moving > remove connection
-			connectedEntity = nil
+      itemSensor.ConnectedEntity = nil
+      itemSensor.Inventory = {}
+      itemSensor.SkipEntityScanning = false
 			sensor.get_control_behavior().parameters = nil
 			return
 		end
-	end
 	
 	-- get assembler inventory
-	if connectedEntity.type == "assembling-machine" then
+	elseif connectedEntity.type == "assembling-machine" then
 		EntityDetected = true
-		for i=1, 4, 1 do --should be 2-4, but perhaps there's a burner assembler mod with fuel inventory too
-			if connectedEntity.get_inventory(i) then
-				local contentsTable = connectedEntity.get_inventory(i).get_contents()
-				for k,v in pairs(contentsTable) do
-					inventory = add_detected_items(inventory, k, v)						
-				end		  
-			end
+    for i=1, #itemSensor.Inventory, 1 do
+      local contentsTable = itemSensor.Inventory[i].get_contents()
+      for k,v in pairs(contentsTable) do
+        contents = add_detected_items(contents, k, v)						
+      end		  
 		end
-	end
 	
 	-- get furnace inventory
-	if connectedEntity.type == "furnace" then
+	elseif connectedEntity.type == "furnace" then
 		EntityDetected = true
-		for i=1, 4, 1 do
-			if connectedEntity.get_inventory(i) then
-				local contentsTable = connectedEntity.get_inventory(i).get_contents()
-				for k,v in pairs(contentsTable) do
-					inventory = add_detected_items(inventory, k, v)						
-				end		  
-			end
+    for i=1, #itemSensor.Inventory, 1 do
+      local contentsTable = itemSensor.Inventory[i].get_contents()
+      for k,v in pairs(contentsTable) do
+        contents = add_detected_items(contents, k, v)						
+      end		        
 		end
-	end
 
 	-- get roboport inventory
-	if connectedEntity.type == "roboport" then
+	elseif connectedEntity.type == "roboport" then
 		EntityDetected = true
 		if itemSensor.logisticNetwork == nil or not itemSensor.logisticNetwork.valid then
 			itemSensor.logisticNetwork = connectedEntity.force.find_logistic_network_by_position(connectedEntity.position,connectedEntity.surface)
@@ -240,14 +278,11 @@ function setInventory(itemSensor)
 		signals[3] = {index=3,signal={type="virtual",name="all-crobots"},count = itemSensor.logisticNetwork.all_construction_robots}
 		signals[4] = {index=4,signal={type="virtual",name="home-crobots"},count = itemSensor.logisticNetwork.available_construction_robots}
 		
-		for i=1, 2, 1 do 
-			if connectedEntity.get_inventory(i) then
-        --printmsg("Found Roboport inventory at index "..i)
-				local contentsTable = connectedEntity.get_inventory(i).get_contents()
-				for k,v in pairs(contentsTable) do
-					inventory = add_detected_items(inventory, k, v)						
-				end		  
-			end
+    for i=1, #itemSensor.Inventory, 1 do
+      local contentsTable = itemSensor.Inventory[i].get_contents()
+      for k,v in pairs(contentsTable) do
+        contents = add_detected_items(contents, k, v)						
+      end		        
 		end
 	end
   
@@ -264,8 +299,7 @@ function setInventory(itemSensor)
 		end
 		
 		--copy inventory		
-		for k,v in pairs(inventory) do 			
-			--table.insert(ccParameter, {index=signalIndex,signal={type="item",name=k},count=v})
+		for k,v in pairs(contents) do
       ccParameter[signalIndex] = {index=signalIndex,signal={type="item",name=k},count=v}
       signalIndex = signalIndex+1
 		end

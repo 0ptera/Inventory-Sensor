@@ -1,0 +1,59 @@
+1.1.5
+- non moving entities are scanned only once
+- inventories of all entities are stored internally for faster update
+
+1.1.4
+- fixed error on remove/destroy
+
+1.1.3
+- performance optimization
+
+1.1.2
+- slight performance improvement thanks to Klonan
+
+1.1.1 (scrapped test version)
+
+1.1.0
+- Sensors now only scan in front (flat side of the combinator)
+- bugfix: placing a sensor after removing the last sensor first would not resubscribe to on_tick
+- added config.lua with paramters for update and scan bounding box
+
+1.0.9
+- update for 0.14.x
+
+1.0.8
+- Performance optimization: distributed updates over update_interval
+
+1.0.7
+- split train-detected signal into wagon and locomotive
+
+1.0.6
+- added Roboports - outputs inventory, all & available bots in network (thanks to Kikkers - Smarter-Circuitry)
+- Outputs detected Entity instead of green
+
+1.0.5
+- added support for cars/tanks
+- Sensor now outputs green=1 if entity is connected
+
+1.0.4
+- Performance optimization: no runtime needed without placed sensors
+- lowered default update intervals
+
+1.0.3
+- Bugfix: MP desync
+
+1.0.2
+- changed name to be more descriptive, added custom sprite
+
+1.0.1
+- Bugfix: Sensors didn't update after loading a save
+
+1.0.0
+- added support for locomotive, cargo-wagon, assembling-machine prototypes
+
+0.1.1
+- performance update
+- added Russian translation (thanks to KroshkaYenot)
+
+0.1.0
+- initial release
