@@ -1,3 +1,10 @@
+1.1.7
+- changed license
+
+1.1.6
+- fixed: logisticNetwork a nil value when connected Roboport is out of power
+- fixed: logistic Network doesn't update when networks split
+
 1.1.5
 - non moving entities are scanned only once
 - inventories of all entities are stored internally for faster update
