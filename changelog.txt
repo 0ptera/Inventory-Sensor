@@ -1,3 +1,10 @@
+1.2.1
+- code cleanup
+
+1.2.0
+- read fluids for all entities using assembler prototype
+- removed redundant logistic network bot statistics
+
 1.1.7
 - changed license
 
