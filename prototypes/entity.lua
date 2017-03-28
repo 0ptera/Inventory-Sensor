@@ -2,7 +2,7 @@ data:extend({
   {
     type = "constant-combinator",
     name = "item-sensor",
-    icon = "__"..MOD_NAME.."__/graphics/icons/inventory-sensor.png",
+    icon = "__Inventory Sensor__/graphics/icons/inventory-sensor.png",
     flags = {"placeable-neutral", "player-creation"},
     minable = {hardness = 0.2, mining_time = 0.5, result = "item-sensor"},
     max_health = 50,
@@ -17,7 +17,7 @@ data:extend({
     {
       north =
       {
-        filename = "__"..MOD_NAME.."__/graphics/entity/inventory-sensor.png",
+        filename = "__Inventory Sensor__/graphics/entity/inventory-sensor.png",
         x = 158,
         y = 5,
         width = 79,
@@ -27,7 +27,7 @@ data:extend({
       },
       east =
       {
-        filename = "__"..MOD_NAME.."__/graphics/entity/inventory-sensor.png",
+        filename = "__Inventory Sensor__/graphics/entity/inventory-sensor.png",
         y = 5,
         width = 79,
         height = 63,
@@ -36,7 +36,7 @@ data:extend({
       },
       south =
       {
-        filename = "__"..MOD_NAME.."__/graphics/entity/inventory-sensor.png",
+        filename = "__Inventory Sensor__/graphics/entity/inventory-sensor.png",
         x = 237,
         y = 5,
         width = 79,
@@ -46,7 +46,7 @@ data:extend({
       },
       west =
       {
-        filename = "__"..MOD_NAME.."__/graphics/entity/inventory-sensor.png",
+        filename = "__Inventory Sensor__/graphics/entity/inventory-sensor.png",
         x = 79,
         y = 5,
         width = 79,

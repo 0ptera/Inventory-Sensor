@@ -9,42 +9,42 @@ data:extend({
   {
     type = "virtual-signal",
     name = "home-lrobots",
-    icon = "__"..MOD_NAME.."__/graphics/icons/lbot-rdy.png",
+    icon = "__Inventory Sensor__/graphics/icons/lbot-rdy.png",
     subgroup = "sensor-signals",
     order = "x[sensor-signals]-aa"
   },
   {
     type = "virtual-signal",
     name = "home-crobots",
-    icon = "__"..MOD_NAME.."__/graphics/icons/cbot-rdy.png",
+    icon = "__Inventory Sensor__/graphics/icons/cbot-rdy.png",
     subgroup = "sensor-signals",
     order = "x[sensor-signals]-ac"
   },
   {
     type = "virtual-signal",
     name = "all-lrobots",
-    icon = "__"..MOD_NAME.."__/graphics/icons/lbot-all.png",
+    icon = "__Inventory Sensor__/graphics/icons/lbot-all.png",
     subgroup = "sensor-signals",
     order = "x[sensor-signals]-ab"
   },
   {
     type = "virtual-signal",
     name = "all-crobots",
-    icon = "__"..MOD_NAME.."__/graphics/icons/cbot-all.png",
+    icon = "__Inventory Sensor__/graphics/icons/cbot-all.png",
     subgroup = "sensor-signals",
     order = "x[sensor-signals]-ad"
   },
   {
     type = "virtual-signal",
     name = "detected-car",
-    icon = "__"..MOD_NAME.."__/graphics/icons/car.png",
+    icon = "__Inventory Sensor__/graphics/icons/car.png",
     subgroup = "sensor-signals",
     order = "x[sensor-signals]-ba"
   },
   {
     type = "virtual-signal",
     name = "detected-tank",
-    icon = "__"..MOD_NAME.."__/graphics/icons/tank.png",
+    icon = "__Inventory Sensor__/graphics/icons/tank.png",
     subgroup = "sensor-signals",
     order = "x[sensor-signals]-bb"
   },
