@@ -10,6 +10,7 @@ local LOCO = "locomotive"
 local WAGON = "cargo-wagon"
 local CAR = "car"
 local TANK = "tank"
+local CHEST = "logistic-container" -- requester: type = "logistic-container" && logistic_mode = "requester"
 
 ---- Events ----
 
@@ -144,18 +145,10 @@ function setConnectedEntity(itemSensor)
           itemSensor.Inventory[3] = entity.get_inventory(3)
           itemSensor.Inventory[4] = entity.get_inventory(4)
           return
-        elseif entity.type == CAR then
+        elseif entity.type == CHEST and entity.prototype.logistic_mode == "requester" then
           itemSensor.ConnectedEntity = entity
-          itemSensor.SkipEntityScanning = false
-          itemSensor.Inventory[1] = entity.get_inventory(1)
-          itemSensor.Inventory[2] = entity.get_inventory(2)
-          itemSensor.Inventory[3] = entity.get_inventory(3)
-          itemSensor.Inventory[4] = entity.get_inventory(4)
-          return
-        elseif entity.type == WAGON then
-          itemSensor.ConnectedEntity = entity
-          itemSensor.SkipEntityScanning = false
-          itemSensor.Inventory[1] = entity.get_inventory(defines.inventory.cargo_wagon)
+          itemSensor.SkipEntityScanning = true
+          itemSensor.Inventory[1] = entity.get_inventory(defines.inventory.chest)
           itemSensor.Inventory[2] = nil
           itemSensor.Inventory[3] = nil
           itemSensor.Inventory[4] = nil
@@ -167,6 +160,22 @@ function setConnectedEntity(itemSensor)
           itemSensor.Inventory[2] = nil
           itemSensor.Inventory[3] = nil
           itemSensor.Inventory[4] = nil
+          return
+        elseif entity.type == WAGON then
+          itemSensor.ConnectedEntity = entity
+          itemSensor.SkipEntityScanning = false
+          itemSensor.Inventory[1] = entity.get_inventory(defines.inventory.cargo_wagon)
+          itemSensor.Inventory[2] = nil
+          itemSensor.Inventory[3] = nil
+          itemSensor.Inventory[4] = nil
+          return
+        elseif entity.type == CAR then
+          itemSensor.ConnectedEntity = entity
+          itemSensor.SkipEntityScanning = false
+          itemSensor.Inventory[1] = entity.get_inventory(1)
+          itemSensor.Inventory[2] = entity.get_inventory(2)
+          itemSensor.Inventory[3] = entity.get_inventory(3)
+          itemSensor.Inventory[4] = entity.get_inventory(4)
           return
         end
       end
@@ -190,8 +199,58 @@ function updateSensor(itemSensor)
 	local signals = {}
   local signalIndex = 1
 
-	-- get locomotive inventory
-	if connectedEntity.type == LOCO then
+	-- get assembler inventory
+	if connectedEntity.type == ASSEMBLER then
+		EntityDetected = true
+    for i=1, #connectedEntity.fluidbox, 1 do
+      local fluid = connectedEntity.fluidbox[i]
+      if fluid then
+        --fluids = Merge2Table(fluids, fluid.type, fluid.amount)
+        signals[signalIndex] = {index = signalIndex, signal = {type = "fluid",name = fluid.type},count = math.floor(fluid.amount+0.5) }
+        signalIndex = signalIndex+1
+      end
+    end
+    for i, inv in pairs(itemSensor.Inventory) do
+      local contentsTable = inv.get_contents()
+      for k,v in pairs(contentsTable) do
+        --items = Merge2Table(items, k, v)
+        signals[signalIndex] = {index = signalIndex, signal = {type = "item",name = k},count = v }
+        signalIndex = signalIndex+1
+      end
+		end
+
+	-- get furnace inventory
+	elseif connectedEntity.type == FURNACE then
+		for i, inv in pairs(itemSensor.Inventory) do
+      local contentsTable = inv.get_contents()
+      for k,v in pairs(contentsTable) do
+        --items = Merge2Table(items, k, v)
+        signals[signalIndex] = {index = signalIndex, signal = {type = "item",name = k},count = v }
+        signalIndex = signalIndex+1
+      end
+		end
+
+	-- get roboport inventory
+	elseif connectedEntity.type == ROBOPORT then
+		for i, inv in pairs(itemSensor.Inventory) do
+      local contentsTable = inv.get_contents()
+      for k,v in pairs(contentsTable) do
+        --items = Merge2Table(items, k, v)
+        signals[signalIndex] = {index = signalIndex, signal = {type = "item",name = k},count = v }
+        signalIndex = signalIndex+1
+      end
+		end
+
+  	-- get requester chest inventory
+	elseif connectedEntity.type == CHEST and connectedEntity.prototype.logistic_mode == "requester" then
+    local contentsTable = itemSensor.Inventory[1].get_contents()
+    for k,v in pairs(contentsTable) do
+      signals[signalIndex] = {index = signalIndex, signal = {type = "item",name = k},count = v }
+      signalIndex = signalIndex+1
+    end
+
+    -- get locomotive inventory
+	elseif connectedEntity.type == LOCO then
 		if connectedEntity.train.state == defines.train_state.wait_station
 		or connectedEntity.train.state == defines.train_state.wait_signal
 		or connectedEntity.train.state == defines.train_state.manual_control then --keeps showing inventory for find_entity_interval ticks after movement start > neglect able
@@ -253,49 +312,6 @@ function updateSensor(itemSensor)
 			sensor.get_control_behavior().parameters = nil
 			return
 		end
-
-	-- get assembler inventory
-	elseif connectedEntity.type == ASSEMBLER then
-		EntityDetected = true
-    for i=1, #connectedEntity.fluidbox, 1 do
-      local fluid = connectedEntity.fluidbox[i]
-      if fluid then
-        --fluids = Merge2Table(fluids, fluid.type, fluid.amount)
-        signals[signalIndex] = {index = signalIndex, signal = {type = "fluid",name = fluid.type},count = math.floor(fluid.amount+0.5) }
-        signalIndex = signalIndex+1
-      end
-    end
-    for i, inv in pairs(itemSensor.Inventory) do
-      local contentsTable = inv.get_contents()
-      for k,v in pairs(contentsTable) do
-        --items = Merge2Table(items, k, v)
-        signals[signalIndex] = {index = signalIndex, signal = {type = "item",name = k},count = v }
-        signalIndex = signalIndex+1
-      end
-		end
-
-	-- get furnace inventory
-	elseif connectedEntity.type == FURNACE then
-		for i, inv in pairs(itemSensor.Inventory) do
-      local contentsTable = inv.get_contents()
-      for k,v in pairs(contentsTable) do
-        --items = Merge2Table(items, k, v)
-        signals[signalIndex] = {index = signalIndex, signal = {type = "item",name = k},count = v }
-        signalIndex = signalIndex+1
-      end
-		end
-
-	-- get roboport inventory
-	elseif connectedEntity.type == ROBOPORT then
-		for i, inv in pairs(itemSensor.Inventory) do
-      local contentsTable = inv.get_contents()
-      for k,v in pairs(contentsTable) do
-        --items = Merge2Table(items, k, v)
-        signals[signalIndex] = {index = signalIndex, signal = {type = "item",name = k},count = v }
-        signalIndex = signalIndex+1
-      end
-		end
   end
-
 	sensor.get_control_behavior().parameters = {parameters=signals}
 end
