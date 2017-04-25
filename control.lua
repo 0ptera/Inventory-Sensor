@@ -8,6 +8,7 @@ local FURNACE = "furnace"
 local ROBOPORT = "roboport"
 local LOCO = "locomotive"
 local WAGON = "cargo-wagon"
+local WAGONFLUID = "fluid-wagon"
 local CAR = "car"
 local TANK = "tank"
 local CHEST = "logistic-container" -- requester: type = "logistic-container" && logistic_mode = "requester"
@@ -169,6 +170,14 @@ function setConnectedEntity(itemSensor)
           itemSensor.Inventory[3] = nil
           itemSensor.Inventory[4] = nil
           return
+        elseif entity.type == WAGONFLUID then
+          itemSensor.ConnectedEntity = entity
+          itemSensor.SkipEntityScanning = false
+          itemSensor.Inventory[1] = entity.fluidbox[1]
+          itemSensor.Inventory[2] = entity.fluidbox[2]
+          itemSensor.Inventory[3] = entity.fluidbox[3]
+          itemSensor.Inventory[4] = nil
+          return
         elseif entity.type == CAR then
           itemSensor.ConnectedEntity = entity
           itemSensor.SkipEntityScanning = false
@@ -188,7 +197,8 @@ function updateSensor(itemSensor)
 	local connectedEntity = itemSensor.ConnectedEntity
 
 	-- clear output of invalid connections
-	if not connectedEntity or not connectedEntity.valid or not itemSensor.Inventory or #itemSensor.Inventory < 1 then
+	--if not connectedEntity or not connectedEntity.valid or not itemSensor.Inventory or #itemSensor.Inventory < 1 then
+  if not connectedEntity or not connectedEntity.valid or not itemSensor.Inventory then
     itemSensor.ConnectedEntity = nil
     itemSensor.Inventory = {}
     itemSensor.SkipEntityScanning = false
@@ -288,7 +298,27 @@ function updateSensor(itemSensor)
 			sensor.get_control_behavior().parameters = nil
 			return
 		end
-
+    
+  -- get fluid wagon inventory
+  elseif connectedEntity.type == WAGONFLUID then
+		if connectedEntity.train.state == defines.train_state.wait_station or
+		  connectedEntity.train.state == defines.train_state.wait_signal or
+		  connectedEntity.train.state == defines.train_state.manual_control then --keeps showing inventory for find_entity_interval ticks after movement start > neglect able
+      signals[1] = {index=1,signal={type="virtual",name="detected-wagon"},count=1}
+      signalIndex = 2
+      for i, inv in pairs(itemSensor.Inventory) do
+        signals[signalIndex] = {index = signalIndex, signal = {type = "fluid",name = inv.type},count =  math.floor(inv.amount+0.5) }
+        signalIndex = signalIndex+1
+			end
+      
+		else -- train is moving > remove connection
+      itemSensor.ConnectedEntity = nil
+      itemSensor.Inventory = {}
+      itemSensor.SkipEntityScanning = false
+			sensor.get_control_behavior().parameters = nil
+			return
+		end
+    
 	-- get car/tank inventory
 	elseif connectedEntity.type == CAR then
 		if tostring(connectedEntity.speed) == "0" then --car isn't moving

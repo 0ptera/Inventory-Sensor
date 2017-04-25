@@ -1,3 +1,10 @@
+1.4.0
+- release for Factorio 0.15
+- read inventories of fluid wagons
+
+1.3.1
+- fixed issue #18 recipe doesn't work when modified by other mod
+
 1.3.0
 - read inventories of logistic requester chests (other chest types are ignored)
 

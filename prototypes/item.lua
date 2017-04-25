@@ -6,7 +6,7 @@ data:extend({
     flags = { "goes-to-quickbar" },
     subgroup = "circuit-network",
     place_result="item-sensor",
-    order = "b[combinators]-c[item-sensor]",
+    order = "c[combinators]-d[item-sensor]",
     stack_size= 50,
   }
 })
