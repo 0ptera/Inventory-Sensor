@@ -1,3 +1,6 @@
+1.4.1
+- read Reactor inventories
+
 1.4.0
 - release for Factorio 0.15
 - read inventories of fluid wagons

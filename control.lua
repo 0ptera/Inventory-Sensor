@@ -5,6 +5,7 @@ local SENSOR = "item-sensor"
 
 local ASSEMBLER = "assembling-machine"
 local FURNACE = "furnace"
+local REACTOR = "reactor"
 local ROBOPORT = "roboport"
 local LOCO = "locomotive"
 local WAGON = "cargo-wagon"
@@ -138,7 +139,7 @@ function setConnectedEntity(itemSensor)
     for i=1, #connectedEntities do
       local entity = connectedEntities[i]
       if entity.valid then
-        if entity.type == FURNACE or entity.type == ASSEMBLER or entity.type == ROBOPORT then
+        if entity.type == FURNACE or entity.type == ASSEMBLER or entity.type == ROBOPORT or entity.type == REACTOR then
           itemSensor.ConnectedEntity = entity
           itemSensor.SkipEntityScanning = true
           itemSensor.Inventory[1] = entity.get_inventory(1)
@@ -239,7 +240,18 @@ function updateSensor(itemSensor)
         signalIndex = signalIndex+1
       end
 		end
-
+    
+	-- get reactor inventory
+	elseif connectedEntity.type == REACTOR then    
+		for i, inv in pairs(itemSensor.Inventory) do
+      local contentsTable = inv.get_contents()
+      for k,v in pairs(contentsTable) do
+        --items = Merge2Table(items, k, v)
+        signals[signalIndex] = {index = signalIndex, signal = {type = "item",name = k},count = v }
+        signalIndex = signalIndex+1
+      end
+		end
+    
 	-- get roboport inventory
 	elseif connectedEntity.type == ROBOPORT then
 		for i, inv in pairs(itemSensor.Inventory) do
