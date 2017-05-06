@@ -1,3 +1,6 @@
+1.4.2
+- read Reactor temperature (requires 0.15.7+)
+
 1.4.1
 - read Reactor inventories
 

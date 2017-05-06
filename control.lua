@@ -242,7 +242,9 @@ function updateSensor(itemSensor)
 		end
     
 	-- get reactor inventory
-	elseif connectedEntity.type == REACTOR then    
+	elseif connectedEntity.type == REACTOR then
+    signals[signalIndex] = {index = signalIndex, signal = {type = "virtual",name = "inv-sensor-temperature"},count = math.floor(connectedEntity.temperature+0.5)}
+    signalIndex = signalIndex+1
 		for i, inv in pairs(itemSensor.Inventory) do
       local contentsTable = inv.get_contents()
       for k,v in pairs(contentsTable) do
