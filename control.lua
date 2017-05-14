@@ -146,13 +146,13 @@ function getScanArea(sensor)
   end
 end
 
-function setConnectedEntity(itemSensor)  
+function setConnectedEntity(itemSensor)
   local connectedEntities = itemSensor.Sensor.surface.find_entities(itemSensor.ScanArea)
   --printmsg("Found "..#connectedEntities.." entities in direction "..sensor.direction)
   if connectedEntities then
     for i=1, #connectedEntities do
       local entity = connectedEntities[i]
-      if entity.valid and SupportedTypes[entity.type] ~= nil and itemSensor.ConnectedEntity ~= entity then      
+      if entity.valid and SupportedTypes[entity.type] ~= nil and itemSensor.ConnectedEntity ~= entity then
         itemSensor.Inventory = {}
         itemSensor.ConnectedEntity = entity
         itemSensor.SkipEntityScanning = SupportedTypes[entity.type]
@@ -161,7 +161,6 @@ function setConnectedEntity(itemSensor)
           inv = entity.get_inventory(i)
           if inv then
             itemSensor.Inventory[#itemSensor.Inventory+1] = inv
-            log(entity.name.." adding inventory "..i)
           end
         end
         return
@@ -227,18 +226,18 @@ function updateSensor(itemSensor)
       itemSensor.SkipEntityScanning = false
 			sensor.get_control_behavior().parameters = nil
 			return
-    end    
+    end
   end
 
   -- special signals
-  if connectedEntity.type == ASSEMBLER or connectedEntity.type == FURNACE then 
+  if connectedEntity.type == ASSEMBLER or connectedEntity.type == FURNACE then
     local progress = connectedEntity.crafting_progress
     if progress then
       signals[signalIndex] = {index = signalIndex, signal = {type = "virtual",name = "inv-sensor-progress"},count = math.ceil(progress*100)}
       signalIndex = signalIndex+1
     end
   end
-  if connectedEntity.type == SILO then 
+  if connectedEntity.type == SILO then
     local progress = connectedEntity.rocket_parts
     if progress then
       signals[signalIndex] = {index = signalIndex, signal = {type = "virtual",name = "inv-sensor-progress"},count = progress}
@@ -252,20 +251,19 @@ function updateSensor(itemSensor)
       signalIndex = signalIndex+1
     end
   end
-  
+
   -- get all fluids
   for i=1, #connectedEntity.fluidbox, 1 do
     local fluid = connectedEntity.fluidbox[i]
-    if fluid then     
+    if fluid then
       signals[signalIndex] = {index = signalIndex, signal = {type = "fluid",name = fluid.type},count = math.floor(fluid.amount+0.5) }
       signalIndex = signalIndex+1
     end
   end
-  
+
   -- get items in all inventories
   for _, inv in pairs(itemSensor.Inventory) do
     local contentsTable = inv.get_contents()
-    log(connectedEntity.name.." inventories "..#itemSensor.Inventory)
     for k,v in pairs(contentsTable) do
       signals[signalIndex] = {index = signalIndex, signal = {type = "item",name = k},count = v }
       signalIndex = signalIndex+1
