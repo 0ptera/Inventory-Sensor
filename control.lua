@@ -7,13 +7,26 @@ local ASSEMBLER = "assembling-machine"
 local FURNACE = "furnace"
 local REACTOR = "reactor"
 local ROBOPORT = "roboport"
+local SILO = "rocket-silo"
+local CHEST = "logistic-container" -- requester: type = "logistic-container" && logistic_mode = "requester"
 local LOCO = "locomotive"
 local WAGON = "cargo-wagon"
 local WAGONFLUID = "fluid-wagon"
 local CAR = "car"
 local TANK = "tank"
-local CHEST = "logistic-container" -- requester: type = "logistic-container" && logistic_mode = "requester"
 
+local SupportedTypes = {
+  [ASSEMBLER] = true,
+  [FURNACE] = true,
+  [REACTOR] = true,
+  [ROBOPORT] = true,
+  [SILO] = true,
+  [CHEST] = true,
+  [CAR] = false,
+  [LOCO] = false,
+  [WAGON] = false,
+  [WAGONFLUID] = false
+}
 ---- Events ----
 
 function onLoad()
@@ -37,6 +50,8 @@ script.on_configuration_changed(function(data)
     local itemSensor = global.ItemSensors[i]
     itemSensor.ID = itemSensor.Sensor.unit_number
     itemSensor.ScanArea = getScanArea(itemSensor.Sensor)
+    itemSensor.ConnectedEntity = nil
+    itemSensor.Inventory = {}
     setConnectedEntity(itemSensor)
   end
 end)
@@ -131,63 +146,25 @@ function getScanArea(sensor)
   end
 end
 
-function setConnectedEntity(itemSensor)
-  itemSensor.Inventory = itemSensor.Inventory or {}
+function setConnectedEntity(itemSensor)  
   local connectedEntities = itemSensor.Sensor.surface.find_entities(itemSensor.ScanArea)
   --printmsg("Found "..#connectedEntities.." entities in direction "..sensor.direction)
   if connectedEntities then
     for i=1, #connectedEntities do
       local entity = connectedEntities[i]
-      if entity.valid then
-        if entity.type == FURNACE or entity.type == ASSEMBLER or entity.type == ROBOPORT or entity.type == REACTOR then
-          itemSensor.ConnectedEntity = entity
-          itemSensor.SkipEntityScanning = true
-          itemSensor.Inventory[1] = entity.get_inventory(1)
-          itemSensor.Inventory[2] = entity.get_inventory(2)
-          itemSensor.Inventory[3] = entity.get_inventory(3)
-          itemSensor.Inventory[4] = entity.get_inventory(4)
-          return
-        elseif entity.type == CHEST and entity.prototype.logistic_mode == "requester" then
-          itemSensor.ConnectedEntity = entity
-          itemSensor.SkipEntityScanning = true
-          itemSensor.Inventory[1] = entity.get_inventory(defines.inventory.chest)
-          itemSensor.Inventory[2] = nil
-          itemSensor.Inventory[3] = nil
-          itemSensor.Inventory[4] = nil
-          return
-        elseif entity.type == LOCO then
-          itemSensor.ConnectedEntity = entity
-          itemSensor.SkipEntityScanning = false
-          itemSensor.Inventory[1] = entity.get_inventory(defines.inventory.fuel)
-          itemSensor.Inventory[2] = nil
-          itemSensor.Inventory[3] = nil
-          itemSensor.Inventory[4] = nil
-          return
-        elseif entity.type == WAGON then
-          itemSensor.ConnectedEntity = entity
-          itemSensor.SkipEntityScanning = false
-          itemSensor.Inventory[1] = entity.get_inventory(defines.inventory.cargo_wagon)
-          itemSensor.Inventory[2] = nil
-          itemSensor.Inventory[3] = nil
-          itemSensor.Inventory[4] = nil
-          return
-        elseif entity.type == WAGONFLUID then
-          itemSensor.ConnectedEntity = entity
-          itemSensor.SkipEntityScanning = false
-          itemSensor.Inventory[1] = entity.fluidbox[1]
-          itemSensor.Inventory[2] = entity.fluidbox[2]
-          itemSensor.Inventory[3] = entity.fluidbox[3]
-          itemSensor.Inventory[4] = nil
-          return
-        elseif entity.type == CAR then
-          itemSensor.ConnectedEntity = entity
-          itemSensor.SkipEntityScanning = false
-          itemSensor.Inventory[1] = entity.get_inventory(1)
-          itemSensor.Inventory[2] = entity.get_inventory(2)
-          itemSensor.Inventory[3] = entity.get_inventory(3)
-          itemSensor.Inventory[4] = entity.get_inventory(4)
-          return
+      if entity.valid and SupportedTypes[entity.type] ~= nil and itemSensor.ConnectedEntity ~= entity then      
+        itemSensor.Inventory = {}
+        itemSensor.ConnectedEntity = entity
+        itemSensor.SkipEntityScanning = SupportedTypes[entity.type]
+        local inv = nil
+        for i=1, 8 do -- iterate blindly over every possible inventory and store the result so we have to do it only once
+          inv = entity.get_inventory(i)
+          if inv then
+            itemSensor.Inventory[#itemSensor.Inventory+1] = inv
+            log(entity.name.." adding inventory "..i)
+          end
         end
+        return
       end
     end
   end
@@ -198,7 +175,6 @@ function updateSensor(itemSensor)
 	local connectedEntity = itemSensor.ConnectedEntity
 
 	-- clear output of invalid connections
-	--if not connectedEntity or not connectedEntity.valid or not itemSensor.Inventory or #itemSensor.Inventory < 1 then
   if not connectedEntity or not connectedEntity.valid or not itemSensor.Inventory then
     itemSensor.ConnectedEntity = nil
     itemSensor.Inventory = {}
@@ -210,152 +186,91 @@ function updateSensor(itemSensor)
 	local signals = {}
   local signalIndex = 1
 
-	-- get assembler inventory
-	if connectedEntity.type == ASSEMBLER then
-		EntityDetected = true
-    for i=1, #connectedEntity.fluidbox, 1 do
-      local fluid = connectedEntity.fluidbox[i]
-      if fluid then
-        --fluids = Merge2Table(fluids, fluid.type, fluid.amount)
-        signals[signalIndex] = {index = signalIndex, signal = {type = "fluid",name = fluid.type},count = math.floor(fluid.amount+0.5) }
-        signalIndex = signalIndex+1
+  -- Vehicle signals and movement detection
+  if connectedEntity.type == LOCO then
+    if connectedEntity.train.state == defines.train_state.wait_station
+		or connectedEntity.train.state == defines.train_state.wait_signal
+		or connectedEntity.train.state == defines.train_state.manual_control then --keeps showing inventory for find_entity_interval ticks after movement start > neglect able
+      signals[signalIndex] = {index = signalIndex, signal={type="virtual",name="detected-locomotive"},count=1}
+      signalIndex = signalIndex+1
+    else -- train is moving > remove connection
+      itemSensor.ConnectedEntity = nil
+      itemSensor.Inventory = {}
+      itemSensor.SkipEntityScanning = false
+			sensor.get_control_behavior().parameters = nil
+			return
+		end
+  elseif connectedEntity.type == WAGON or connectedEntity.type == WAGONFLUID then
+    if connectedEntity.train.state == defines.train_state.wait_station
+		or connectedEntity.train.state == defines.train_state.wait_signal
+		or connectedEntity.train.state == defines.train_state.manual_control then --keeps showing inventory for find_entity_interval ticks after movement start > neglect able
+      signals[signalIndex] = {index = signalIndex, signal={type="virtual",name="detected-wagon"},count=1}
+      signalIndex = signalIndex+1
+    else -- train is moving > remove connection
+      itemSensor.ConnectedEntity = nil
+      itemSensor.Inventory = {}
+      itemSensor.SkipEntityScanning = false
+			sensor.get_control_behavior().parameters = nil
+			return
+		end
+  elseif connectedEntity.type == CAR then
+    if tostring(connectedEntity.speed) == "0" then --car isn't moving
+      if connectedEntity.name == TANK then
+        signals[signalIndex] = {index = signalIndex, signal={type="virtual",name="detected-tank"},count=1}
+      else
+        signals[signalIndex] = {index = signalIndex, signal={type="virtual",name="detected-car"},count=1}
       end
+      signalIndex = signalIndex+1
+    else -- car is moving > remove connection
+      itemSensor.ConnectedEntity = nil
+      itemSensor.Inventory = {}
+      itemSensor.SkipEntityScanning = false
+			sensor.get_control_behavior().parameters = nil
+			return
+    end    
+  end
+
+  -- special signals
+  if connectedEntity.type == ASSEMBLER or connectedEntity.type == FURNACE then 
+    local progress = connectedEntity.crafting_progress
+    if progress then
+      signals[signalIndex] = {index = signalIndex, signal = {type = "virtual",name = "inv-sensor-progress"},count = math.ceil(progress*100)}
+      signalIndex = signalIndex+1
     end
-    for i, inv in pairs(itemSensor.Inventory) do
-      local contentsTable = inv.get_contents()
-      for k,v in pairs(contentsTable) do
-        --items = Merge2Table(items, k, v)
-        signals[signalIndex] = {index = signalIndex, signal = {type = "item",name = k},count = v }
-        signalIndex = signalIndex+1
-      end
-		end
-
-	-- get furnace inventory
-	elseif connectedEntity.type == FURNACE then
-		for i, inv in pairs(itemSensor.Inventory) do
-      local contentsTable = inv.get_contents()
-      for k,v in pairs(contentsTable) do
-        --items = Merge2Table(items, k, v)
-        signals[signalIndex] = {index = signalIndex, signal = {type = "item",name = k},count = v }
-        signalIndex = signalIndex+1
-      end
-		end
-    
-	-- get reactor inventory
-	elseif connectedEntity.type == REACTOR then
-    signals[signalIndex] = {index = signalIndex, signal = {type = "virtual",name = "inv-sensor-temperature"},count = math.floor(connectedEntity.temperature+0.5)}
-    signalIndex = signalIndex+1
-		for i, inv in pairs(itemSensor.Inventory) do
-      local contentsTable = inv.get_contents()
-      for k,v in pairs(contentsTable) do
-        --items = Merge2Table(items, k, v)
-        signals[signalIndex] = {index = signalIndex, signal = {type = "item",name = k},count = v }
-        signalIndex = signalIndex+1
-      end
-		end
-    
-	-- get roboport inventory
-	elseif connectedEntity.type == ROBOPORT then
-		for i, inv in pairs(itemSensor.Inventory) do
-      local contentsTable = inv.get_contents()
-      for k,v in pairs(contentsTable) do
-        --items = Merge2Table(items, k, v)
-        signals[signalIndex] = {index = signalIndex, signal = {type = "item",name = k},count = v }
-        signalIndex = signalIndex+1
-      end
-		end
-
-  	-- get requester chest inventory
-	elseif connectedEntity.type == CHEST and connectedEntity.prototype.logistic_mode == "requester" then
-    local contentsTable = itemSensor.Inventory[1].get_contents()
+  end
+  if connectedEntity.type == SILO then 
+    local progress = connectedEntity.rocket_parts
+    if progress then
+      signals[signalIndex] = {index = signalIndex, signal = {type = "virtual",name = "inv-sensor-progress"},count = progress}
+      signalIndex = signalIndex+1
+    end
+  end
+  if connectedEntity.type == REACTOR then
+    local temp = connectedEntity.temperature
+    if temp then
+      signals[signalIndex] = {index = signalIndex, signal = {type = "virtual",name = "inv-sensor-temperature"},count = math.floor(temp+0.5)}
+      signalIndex = signalIndex+1
+    end
+  end
+  
+  -- get all fluids
+  for i=1, #connectedEntity.fluidbox, 1 do
+    local fluid = connectedEntity.fluidbox[i]
+    if fluid then     
+      signals[signalIndex] = {index = signalIndex, signal = {type = "fluid",name = fluid.type},count = math.floor(fluid.amount+0.5) }
+      signalIndex = signalIndex+1
+    end
+  end
+  
+  -- get items in all inventories
+  for _, inv in pairs(itemSensor.Inventory) do
+    local contentsTable = inv.get_contents()
+    log(connectedEntity.name.." inventories "..#itemSensor.Inventory)
     for k,v in pairs(contentsTable) do
       signals[signalIndex] = {index = signalIndex, signal = {type = "item",name = k},count = v }
       signalIndex = signalIndex+1
     end
-
-    -- get locomotive inventory
-	elseif connectedEntity.type == LOCO then
-		if connectedEntity.train.state == defines.train_state.wait_station
-		or connectedEntity.train.state == defines.train_state.wait_signal
-		or connectedEntity.train.state == defines.train_state.manual_control then --keeps showing inventory for find_entity_interval ticks after movement start > neglect able
-			signals[1] = {index=1,signal={type="virtual",name="detected-locomotive"},count=1}
-      signalIndex = 2
-			local contentsTable = itemSensor.Inventory[1].get_contents()
-      for k,v in pairs(contentsTable) do
-        signals[signalIndex] = {index = signalIndex, signal = {type = "item",name = k},count = v }
-        signalIndex = signalIndex+1
-      end
-		else -- train is moving > remove connection
-      itemSensor.ConnectedEntity = nil
-      itemSensor.Inventory = {}
-      itemSensor.SkipEntityScanning = false
-			sensor.get_control_behavior().parameters = nil
-			return
-		end
-
-	-- get traincar inventory
-	elseif connectedEntity.type == WAGON then
-		if connectedEntity.train.state == defines.train_state.wait_station or
-		  connectedEntity.train.state == defines.train_state.wait_signal or
-		  connectedEntity.train.state == defines.train_state.manual_control then --keeps showing inventory for find_entity_interval ticks after movement start > neglect able
-			signals[1] = {index=1,signal={type="virtual",name="detected-wagon"},count=1}
-      signalIndex = 2
-      local contentsTable = itemSensor.Inventory[1].get_contents()
-      for k,v in pairs(contentsTable) do
-        signals[signalIndex] = {index = signalIndex, signal = {type = "item",name = k},count = v }
-        signalIndex = signalIndex+1
-      end
-		else -- train is moving > remove connection
-      itemSensor.ConnectedEntity = nil
-      itemSensor.Inventory = {}
-      itemSensor.SkipEntityScanning = false
-			sensor.get_control_behavior().parameters = nil
-			return
-		end
-    
-  -- get fluid wagon inventory
-  elseif connectedEntity.type == WAGONFLUID then
-		if connectedEntity.train.state == defines.train_state.wait_station or
-		  connectedEntity.train.state == defines.train_state.wait_signal or
-		  connectedEntity.train.state == defines.train_state.manual_control then --keeps showing inventory for find_entity_interval ticks after movement start > neglect able
-      signals[1] = {index=1,signal={type="virtual",name="detected-wagon"},count=1}
-      signalIndex = 2
-      for i, inv in pairs(itemSensor.Inventory) do
-        signals[signalIndex] = {index = signalIndex, signal = {type = "fluid",name = inv.type},count =  math.floor(inv.amount+0.5) }
-        signalIndex = signalIndex+1
-			end
-      
-		else -- train is moving > remove connection
-      itemSensor.ConnectedEntity = nil
-      itemSensor.Inventory = {}
-      itemSensor.SkipEntityScanning = false
-			sensor.get_control_behavior().parameters = nil
-			return
-		end
-    
-	-- get car/tank inventory
-	elseif connectedEntity.type == CAR then
-		if tostring(connectedEntity.speed) == "0" then --car isn't moving
-			if connectedEntity.name == TANK then
-				signals[1] = {index=1,signal={type="virtual",name="detected-tank"},count=1}
-			else
-				signals[1] = {index=1,signal={type="virtual",name="detected-car"},count=1}
-			end
-      signalIndex = 2
-			for i, inv in pairs(itemSensor.Inventory) do
-        local contentsTable = inv.get_contents()
-        for k,v in pairs(contentsTable) do
-          signals[signalIndex] = {index = signalIndex, signal = {type = "item",name = k},count = v }
-          signalIndex = signalIndex+1
-        end
-			end
-		else -- car is moving > remove connection
-      itemSensor.ConnectedEntity = nil
-      itemSensor.Inventory = {}
-      itemSensor.SkipEntityScanning = false
-			sensor.get_control_behavior().parameters = nil
-			return
-		end
   end
+
 	sensor.get_control_behavior().parameters = {parameters=signals}
 end

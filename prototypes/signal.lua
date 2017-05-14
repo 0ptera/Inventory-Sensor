@@ -36,10 +36,17 @@ data:extend({
   },
   {
     type = "virtual-signal",
+    name = "inv-sensor-progress",
+    icon = "__Inventory Sensor__/graphics/icons/progress.png",
+    subgroup = "sensor-signals",
+    order = "x[sensor-signals]-ba"
+  },
+  {
+    type = "virtual-signal",
     name = "inv-sensor-temperature",
     icon = "__Inventory Sensor__/graphics/icons/temperature.png",
     subgroup = "sensor-signals",
-    order = "x[sensor-signals]-ba"
+    order = "x[sensor-signals]-bb"
   },
   {
     type = "virtual-signal",

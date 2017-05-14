@@ -1,3 +1,8 @@
+1.4.3
+- read assembler/furnace progress in %
+- read rocket silo inventory and rocket parts as progress
+- checking all 8 possible inventories every entity when connecting. Nuclear fueled locomotives properly show burnt results.
+
 1.4.2
 - read Reactor temperature (requires 0.15.7+)
 
