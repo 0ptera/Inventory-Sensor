@@ -1,3 +1,6 @@
+1.4.4
+- removed left over debug logging
+
 1.4.3
 - read assembler/furnace progress in %
 - read rocket silo inventory and rocket parts as progress
