@@ -1,3 +1,6 @@
+1.4.5
+- added 64x64 technology icon
+
 1.4.4
 - removed left over debug logging
 

@@ -2,7 +2,8 @@ data:extend({
   {
     type = "technology",
     name = "item-detection",
-	icon = "__Inventory Sensor__/graphics/icons/inventory-sensor.png",
+    icon = "__Inventory Sensor__/graphics/tech/inventory-sensor.png",
+    icon_size = 64,
     prerequisites = {"plastics", "advanced-electronics"},
     effects =
     {
