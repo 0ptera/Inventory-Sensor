@@ -1,0 +1,9 @@
+{
+  "virtual-signal":
+  [
+    ["detected-car", "inv-sensor-detected-car"],
+    ["detected-tank", "inv-sensor-detected-tank"],
+    ["detected-wagon", "inv-sensor-detected-wagon"],
+    ["detected-locomotive", "inv-sensor-detected-locomotive"]
+  ]
+}
