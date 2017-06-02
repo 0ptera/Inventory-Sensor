@@ -146,6 +146,18 @@ function getScanArea(sensor)
   end
 end
 
+function setInventories(itemSensor, entity)
+  itemSensor.Inventory = {}
+  local inv = nil
+  for i=1, 8 do -- iterate blindly over every possible inventory and store the result so we have to do it only once
+    inv = entity.get_inventory(i)
+    if inv then
+      itemSensor.Inventory[#itemSensor.Inventory+1] = inv
+      -- log("adding inventory "..tostring(inv.index))
+    end
+  end
+end
+
 function setConnectedEntity(itemSensor)
   local connectedEntities = itemSensor.Sensor.surface.find_entities(itemSensor.ScanArea)
   --printmsg("Found "..#connectedEntities.." entities in direction "..sensor.direction)
@@ -153,16 +165,9 @@ function setConnectedEntity(itemSensor)
     for i=1, #connectedEntities do
       local entity = connectedEntities[i]
       if entity.valid and SupportedTypes[entity.type] ~= nil and itemSensor.ConnectedEntity ~= entity then
-        itemSensor.Inventory = {}
         itemSensor.ConnectedEntity = entity
         itemSensor.SkipEntityScanning = SupportedTypes[entity.type]
-        local inv = nil
-        for i=1, 8 do -- iterate blindly over every possible inventory and store the result so we have to do it only once
-          inv = entity.get_inventory(i)
-          if inv then
-            itemSensor.Inventory[#itemSensor.Inventory+1] = inv
-          end
-        end
+        setInventories(itemSensor, entity)
         return
       end
     end
@@ -178,6 +183,7 @@ function updateSensor(itemSensor)
     itemSensor.ConnectedEntity = nil
     itemSensor.Inventory = {}
     itemSensor.SkipEntityScanning = false
+    itemSensor.SiloStatus = nil
 		sensor.get_control_behavior().parameters = nil
 		return
 	end
@@ -190,7 +196,7 @@ function updateSensor(itemSensor)
     if connectedEntity.train.state == defines.train_state.wait_station
 		or connectedEntity.train.state == defines.train_state.wait_signal
 		or connectedEntity.train.state == defines.train_state.manual_control then --keeps showing inventory for find_entity_interval ticks after movement start > neglect able
-      signals[signalIndex] = {index = signalIndex, signal={type="virtual",name="detected-locomotive"},count=1}
+      signals[signalIndex] = {index = signalIndex, signal={type="virtual",name="inv-sensor-detected-locomotive"},count=1}
       signalIndex = signalIndex+1
     else -- train is moving > remove connection
       itemSensor.ConnectedEntity = nil
@@ -203,7 +209,7 @@ function updateSensor(itemSensor)
     if connectedEntity.train.state == defines.train_state.wait_station
 		or connectedEntity.train.state == defines.train_state.wait_signal
 		or connectedEntity.train.state == defines.train_state.manual_control then --keeps showing inventory for find_entity_interval ticks after movement start > neglect able
-      signals[signalIndex] = {index = signalIndex, signal={type="virtual",name="detected-wagon"},count=1}
+      signals[signalIndex] = {index = signalIndex, signal={type="virtual",name="inv-sensor-detected-wagon"},count=1}
       signalIndex = signalIndex+1
     else -- train is moving > remove connection
       itemSensor.ConnectedEntity = nil
@@ -215,9 +221,9 @@ function updateSensor(itemSensor)
   elseif connectedEntity.type == CAR then
     if tostring(connectedEntity.speed) == "0" then --car isn't moving
       if connectedEntity.name == TANK then
-        signals[signalIndex] = {index = signalIndex, signal={type="virtual",name="detected-tank"},count=1}
+        signals[signalIndex] = {index = signalIndex, signal={type="virtual",name="inv-sensor-detected-tank"},count=1}
       else
-        signals[signalIndex] = {index = signalIndex, signal={type="virtual",name="detected-car"},count=1}
+        signals[signalIndex] = {index = signalIndex, signal={type="virtual",name="inv-sensor-detected-car"},count=1}
       end
       signalIndex = signalIndex+1
     else -- car is moving > remove connection
@@ -238,11 +244,23 @@ function updateSensor(itemSensor)
     end
   end
   if connectedEntity.type == SILO then
-    local progress = connectedEntity.rocket_parts
-    if progress then
-      signals[signalIndex] = {index = signalIndex, signal = {type = "virtual",name = "inv-sensor-progress"},count = progress}
-      signalIndex = signalIndex+1
+    -- rocket inventory is nil when no rocket is ready so we have to constantly grab all possible inventories.
+    setInventories(itemSensor, connectedEntity)
+
+    local parts = connectedEntity.rocket_parts
+
+    if itemSensor.SiloStatus == nil and parts >= 90 then
+      itemSensor.SiloStatus = 1 -- rocket built
+    elseif itemSensor.SiloStatus == 1 and connectedEntity.get_inventory(defines.inventory.rocket_silo_rocket) then
+      itemSensor.SiloStatus = 2 -- rocket ready
+    elseif itemSensor.SiloStatus == 2 and not connectedEntity.get_inventory(defines.inventory.rocket_silo_rocket) then
+      itemSensor.SiloStatus = nil -- rocket has been launched
     end
+    -- log("Silo Status: "..tostring(itemSensor.SiloStatus))
+    if itemSensor.SiloStatus and parts < 90 then parts = 100 end
+      
+    signals[signalIndex] = {index = signalIndex, signal = {type = "virtual",name = "inv-sensor-progress"},count = parts}
+    signalIndex = signalIndex+1
   end
   if connectedEntity.type == REACTOR then
     local temp = connectedEntity.temperature
