@@ -30,9 +30,9 @@ local SupportedTypes = {
 ---- Events ----
 
 function onLoad()
-	if global.ItemSensors and #global.ItemSensors > 0 then
-		script.on_event(defines.events.on_tick, ticker) --subscribe ticker when sensors exist
-	end
+  if global.ItemSensors and #global.ItemSensors > 0 then
+    script.on_event(defines.events.on_tick, ticker) --subscribe ticker when sensors exist
+  end
 end
 
 script.on_init(function()
@@ -57,15 +57,15 @@ script.on_configuration_changed(function(data)
 end)
 
 script.on_event(defines.events.on_built_entity, function(event)
-	if (event.created_entity.name == "item-sensor") then
-		CreateItemSensor(event.created_entity)
-	end
+  if (event.created_entity.name == "item-sensor") then
+    CreateItemSensor(event.created_entity)
+  end
 end)
 
 script.on_event(defines.events.on_robot_built_entity, function(event)
-	if (event.created_entity.name == "item-sensor") then
-		CreateItemSensor(event.created_entity)
-	end
+  if (event.created_entity.name == "item-sensor") then
+    CreateItemSensor(event.created_entity)
+  end
 end)
 
 
@@ -89,40 +89,40 @@ end)
 
 
 function ticker(event)
-	if global.ItemSensors ~= nil and #global.ItemSensors > 0 then
+  if global.ItemSensors ~= nil and #global.ItemSensors > 0 then
   local tick = game.tick
-		for i=1, #global.ItemSensors do
+    for i=1, #global.ItemSensors do
       local itemSensor = global.ItemSensors[i]
-			if not itemSensor.SkipEntityScanning and (i + tick) % find_entity_interval == 0 then
-				setConnectedEntity(itemSensor)
-			end
-			if (i + tick) % update_interval == 0 then
-				updateSensor(itemSensor)
-			end
-		end
-	else
-		script.on_event(defines.events.on_tick, nil) --unsubscribe if no sensors
-	end
+      if not itemSensor.SkipEntityScanning and (i + tick) % find_entity_interval == 0 then
+        setConnectedEntity(itemSensor)
+      end
+      if (i + tick) % update_interval == 0 then
+        updateSensor(itemSensor)
+      end
+    end
+  else
+    script.on_event(defines.events.on_tick, nil) --unsubscribe if no sensors
+  end
 end
 
 ---- Logic ----
 
 function CreateItemSensor(entity)
-	if global.ItemSensors == nil then
-		global.ItemSensors = {}
-	end
+  if global.ItemSensors == nil then
+    global.ItemSensors = {}
+  end
   if #global.ItemSensors == 0 then
     script.on_event(defines.events.on_tick, ticker) --subscribe ticker
   end
-	entity.operable = false
-	entity.rotatable = false
-	local itemSensor = {}
+  entity.operable = false
+  entity.rotatable = false
+  local itemSensor = {}
   itemSensor.ID = entity.unit_number
   itemSensor.Sensor = entity
   itemSensor.ScanArea = getScanArea(entity)
   setConnectedEntity(itemSensor)
 
-	global.ItemSensors[#global.ItemSensors+1] = itemSensor
+  global.ItemSensors[#global.ItemSensors+1] = itemSensor
 end
 
 function removeItemSensor(entity)
@@ -175,49 +175,49 @@ function setConnectedEntity(itemSensor)
 end
 
 function updateSensor(itemSensor)
-	local sensor = itemSensor.Sensor
-	local connectedEntity = itemSensor.ConnectedEntity
+  local sensor = itemSensor.Sensor
+  local connectedEntity = itemSensor.ConnectedEntity
 
-	-- clear output of invalid connections
+  -- clear output of invalid connections
   if not connectedEntity or not connectedEntity.valid or not itemSensor.Inventory then
     itemSensor.ConnectedEntity = nil
     itemSensor.Inventory = {}
     itemSensor.SkipEntityScanning = false
     itemSensor.SiloStatus = nil
-		sensor.get_control_behavior().parameters = nil
-		return
-	end
+    sensor.get_control_behavior().parameters = nil
+    return
+  end
 
-	local signals = {}
+  local signals = {}
   local signalIndex = 1
 
   -- Vehicle signals and movement detection
   if connectedEntity.type == LOCO then
     if connectedEntity.train.state == defines.train_state.wait_station
-		or connectedEntity.train.state == defines.train_state.wait_signal
-		or connectedEntity.train.state == defines.train_state.manual_control then --keeps showing inventory for find_entity_interval ticks after movement start > neglect able
+    or connectedEntity.train.state == defines.train_state.wait_signal
+    or connectedEntity.train.state == defines.train_state.manual_control then --keeps showing inventory for find_entity_interval ticks after movement start > neglect able
       signals[signalIndex] = {index = signalIndex, signal={type="virtual",name="inv-sensor-detected-locomotive"},count=1}
       signalIndex = signalIndex+1
     else -- train is moving > remove connection
       itemSensor.ConnectedEntity = nil
       itemSensor.Inventory = {}
       itemSensor.SkipEntityScanning = false
-			sensor.get_control_behavior().parameters = nil
-			return
-		end
+      sensor.get_control_behavior().parameters = nil
+      return
+    end
   elseif connectedEntity.type == WAGON or connectedEntity.type == WAGONFLUID then
     if connectedEntity.train.state == defines.train_state.wait_station
-		or connectedEntity.train.state == defines.train_state.wait_signal
-		or connectedEntity.train.state == defines.train_state.manual_control then --keeps showing inventory for find_entity_interval ticks after movement start > neglect able
+    or connectedEntity.train.state == defines.train_state.wait_signal
+    or connectedEntity.train.state == defines.train_state.manual_control then --keeps showing inventory for find_entity_interval ticks after movement start > neglect able
       signals[signalIndex] = {index = signalIndex, signal={type="virtual",name="inv-sensor-detected-wagon"},count=1}
       signalIndex = signalIndex+1
     else -- train is moving > remove connection
       itemSensor.ConnectedEntity = nil
       itemSensor.Inventory = {}
       itemSensor.SkipEntityScanning = false
-			sensor.get_control_behavior().parameters = nil
-			return
-		end
+      sensor.get_control_behavior().parameters = nil
+      return
+    end
   elseif connectedEntity.type == CAR then
     if tostring(connectedEntity.speed) == "0" then --car isn't moving
       if connectedEntity.name == TANK then
@@ -230,8 +230,8 @@ function updateSensor(itemSensor)
       itemSensor.ConnectedEntity = nil
       itemSensor.Inventory = {}
       itemSensor.SkipEntityScanning = false
-			sensor.get_control_behavior().parameters = nil
-			return
+      sensor.get_control_behavior().parameters = nil
+      return
     end
   end
 
@@ -288,5 +288,5 @@ function updateSensor(itemSensor)
     end
   end
 
-	sensor.get_control_behavior().parameters = {parameters=signals}
+  sensor.get_control_behavior().parameters = {parameters=signals}
 end
