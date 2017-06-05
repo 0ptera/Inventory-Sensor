@@ -27,6 +27,9 @@ local SupportedTypes = {
   [WAGON] = false,
   [WAGONFLUID] = false
 }
+
+local ceil = math.ceil
+
 ---- Events ----
 
 function onLoad()
@@ -239,7 +242,7 @@ function updateSensor(itemSensor)
   if connectedEntity.type == ASSEMBLER or connectedEntity.type == FURNACE then
     local progress = connectedEntity.crafting_progress
     if progress then
-      signals[signalIndex] = {index = signalIndex, signal = {type = "virtual",name = "inv-sensor-progress"},count = math.ceil(progress*100)}
+      signals[signalIndex] = {index = signalIndex, signal = {type = "virtual",name = "inv-sensor-progress"},count = ceil(progress*100)}
       signalIndex = signalIndex+1
     end
   end
@@ -265,7 +268,7 @@ function updateSensor(itemSensor)
   if connectedEntity.type == REACTOR then
     local temp = connectedEntity.temperature
     if temp then
-      signals[signalIndex] = {index = signalIndex, signal = {type = "virtual",name = "inv-sensor-temperature"},count = math.floor(temp+0.5)}
+      signals[signalIndex] = {index = signalIndex, signal = {type = "virtual",name = "inv-sensor-temperature"},count = ceil(temp-0.4)}
       signalIndex = signalIndex+1
     end
   end
@@ -274,7 +277,7 @@ function updateSensor(itemSensor)
   for i=1, #connectedEntity.fluidbox, 1 do
     local fluid = connectedEntity.fluidbox[i]
     if fluid then
-      signals[signalIndex] = {index = signalIndex, signal = {type = "fluid",name = fluid.type},count = math.floor(fluid.amount+0.5) }
+      signals[signalIndex] = {index = signalIndex, signal = {type = "fluid",name = fluid.type},count = ceil(fluid.amount) }
       signalIndex = signalIndex+1
     end
   end
