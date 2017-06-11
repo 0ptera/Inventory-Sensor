@@ -28,6 +28,7 @@ local SupportedTypes = {
   [WAGONFLUID] = false
 }
 
+local floor = math.floor
 local ceil = math.ceil
 
 ---- Events ----
@@ -242,7 +243,7 @@ function updateSensor(itemSensor)
   if connectedEntity.type == ASSEMBLER or connectedEntity.type == FURNACE then
     local progress = connectedEntity.crafting_progress
     if progress then
-      signals[signalIndex] = {index = signalIndex, signal = {type = "virtual",name = "inv-sensor-progress"},count = ceil(progress*100)}
+      signals[signalIndex] = {index = signalIndex, signal = {type = "virtual",name = "inv-sensor-progress"},count = floor(progress*100)}
       signalIndex = signalIndex+1
     end
   end
@@ -268,7 +269,8 @@ function updateSensor(itemSensor)
   if connectedEntity.type == REACTOR then
     local temp = connectedEntity.temperature
     if temp then
-      signals[signalIndex] = {index = signalIndex, signal = {type = "virtual",name = "inv-sensor-temperature"},count = ceil(temp-0.4)}
+      log("temp: "..tostring(temp))
+      signals[signalIndex] = {index = signalIndex, signal = {type = "virtual",name = "inv-sensor-temperature"},count = floor(temp+0.5)}
       signalIndex = signalIndex+1
     end
   end

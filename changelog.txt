@@ -1,3 +1,8 @@
+1.4.9
+- better icon for progress
+- better icon for temperature
+- fixed progress rounding to 101%
+
 1.4.8
 - fixed missing localization keys
 
@@ -18,7 +23,7 @@
 1.4.3
 - read assembler/furnace progress in %
 - read rocket silo inventory and rocket parts as progress
-- checking all 8 possible inventories every entity when connecting. Nuclear fueled locomotives properly show burnt results.
+- checking all 8 possible inventories every entity when connecting. Nuclear fuelled locomotives properly show burnt results.
 
 1.4.2
 - read Reactor temperature (requires 0.15.7+)
