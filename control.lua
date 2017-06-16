@@ -269,7 +269,7 @@ function updateSensor(itemSensor)
   if connectedEntity.type == REACTOR then
     local temp = connectedEntity.temperature
     if temp then
-      log("temp: "..tostring(temp))
+      -- log("temp: "..tostring(temp))
       signals[signalIndex] = {index = signalIndex, signal = {type = "virtual",name = "inv-sensor-temperature"},count = floor(temp+0.5)}
       signalIndex = signalIndex+1
     end

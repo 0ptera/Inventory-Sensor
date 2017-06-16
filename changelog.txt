@@ -1,3 +1,6 @@
+1.4.10
+- removed debug logging
+
 1.4.9
 - better icon for progress
 - better icon for temperature
