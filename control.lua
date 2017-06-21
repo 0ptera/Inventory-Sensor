@@ -36,11 +36,9 @@ local ceil = math.ceil
 ---- Events ----
 
 function init_events()
-	log("[IS] OnEntityCreated registered")
 	script.on_event({defines.events.on_built_entity, defines.events.on_robot_built_entity}, OnEntityCreated)
 	if global.ItemSensors and #global.ItemSensors > 0 then
-		log("[IS] OnTick, OnEntityRemoved registered")
-		script.on_event(defines.events.on_tick, OnTick)		
+		script.on_event(defines.events.on_tick, OnTick)
 		script.on_event({defines.events.on_preplayer_mined_item, defines.events.on_robot_pre_mined, defines.events.on_entity_died}, OnEntityRemoved)
 	end
 end
@@ -73,25 +71,22 @@ function OnEntityCreated(event)
 		if #global.ItemSensors == 1 then
 			script.on_event(defines.events.on_tick, OnTick)
 			script.on_event({defines.events.on_preplayer_mined_item, defines.events.on_robot_pre_mined, defines.events.on_entity_died}, OnEntityRemoved)
-			log("[IS] OnTick, OnEntityRemoved registered")
-		end	
+		end
 	end
 end
 
 function OnEntityRemoved(event)
 -- script.on_event({defines.events.on_preplayer_mined_item, defines.events.on_robot_pre_mined, defines.events.on_entity_died}, function(event)
 	if event.entity.name == SENSOR then
-		log("[IS] removing Sensor "..event.entity.unit_number)
 		RemoveItemSensor(event.entity)
 		if #global.ItemSensors == 0 then
 			script.on_event(defines.events.on_tick, nil)
 			script.on_event({defines.events.on_preplayer_mined_item, defines.events.on_robot_pre_mined, defines.events.on_entity_died}, nil)
-			log("[IS] OnTick, OnEntityRemoved unregistered")
-		end	
+		end
 	end
 end
 
-function OnTick(event)	
+function OnTick(event)
 	local tick = game.tick
 	for i=1, #global.ItemSensors do
 		local itemSensor = global.ItemSensors[i]
@@ -125,7 +120,6 @@ function RemoveItemSensor(entity)
 	for i=#global.ItemSensors, 1, -1 do
 		if entity.unit_number == global.ItemSensors[i].ID then
 			table.remove(global.ItemSensors,i)
-			log("[IS] removed Sensor "..entity.unit_number)
 		end
 	end
 end
