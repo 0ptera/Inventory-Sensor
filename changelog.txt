@@ -1,3 +1,6 @@
+1.4.11
+- deconstruction triggers only if sensors exist
+
 1.4.10
 - removed debug logging
 
