@@ -157,7 +157,7 @@ function ResetStride()
   else
     global.SensorStride = 1
   end
-  log("[IS] sride set to "..global.SensorStride)
+  -- log("[IS] stride set to "..global.SensorStride)
 end
 
 

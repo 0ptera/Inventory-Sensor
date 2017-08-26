@@ -1,3 +1,6 @@
+1.5.2
+- fixed possible integer overflow from mod settings
+
 1.5.1
 - improved performance by 8% for 120 Sensors
 
