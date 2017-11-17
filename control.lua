@@ -102,6 +102,8 @@ function OnEntityRemoved(event)
 end
 
 
+-- grouped stepping by Optera
+-- 91307.27ms on 100k ticks
 function OnTick(event)
   global.tickCount = global.tickCount or 1
   global.SensorIndex = global.SensorIndex or 1
@@ -135,17 +137,17 @@ function OnTick(event)
   end
 end
 
+-- stepping from tick modulo with stride by eradicator
+-- 93048.58ms on 100k ticks: 1.9% slower than grouped stepping
 -- function OnTick(event)
-	-- local tick = game.tick
-	-- for i=1, #global.ItemSensors do
-		-- local itemSensor = global.ItemSensors[i]
-		-- if not itemSensor.SkipEntityScanning and (i + tick) % ScanInterval == 0 then
-			-- SetConnectedEntity(itemSensor)
-		-- end
-		-- if (i + tick) % UpdateInterval == 0 then
-			-- UpdateSensor(itemSensor)
-		-- end
-	-- end
+  -- local offset = event.tick % UpdateInterval
+  -- for i=#global.ItemSensors - offset, 1, -1 * UpdateInterval do
+    -- local itemSensor = global.ItemSensors[i]
+    -- if not itemSensor.SkipEntityScanning and (event.tick - itemSensor.LastScanned) >= ScanInterval then
+      -- SetConnectedEntity(itemSensor)
+    -- end    
+    -- UpdateSensor(itemSensor)  
+  -- end
 -- end
 
 ---- LOGIC ----
@@ -204,14 +206,22 @@ function SetConnectedEntity(itemSensor)
 	if connectedEntities then
 		for i=1, #connectedEntities do
 			local entity = connectedEntities[i]
-			if entity.valid and SupportedTypes[entity.type] ~= nil and itemSensor.ConnectedEntity ~= entity then
+			if entity.valid and SupportedTypes[entity.type] ~= nil then
+        -- log("[IS] Sensor "..itemSensor.Sensor.unit_number.." found entity "..tostring(entity.type))
 				itemSensor.ConnectedEntity = entity
 				itemSensor.SkipEntityScanning = SupportedTypes[entity.type]
-				SetInventories(itemSensor, entity)
+        if itemSensor.ConnectedEntity ~= entity then
+          SetInventories(itemSensor, entity)
+        end
 				return
 			end
 		end
-	end
+  end  
+  -- if no entity was found remove stored data
+  -- log("[IS] Sensor "..itemSensor.Sensor.unit_number.." no entity found")
+  itemSensor.ConnectedEntity = nil
+  itemSensor.SkipEntityScanning = false
+  itemSensor.Inventory = {}
 end
 
 function UpdateSensor(itemSensor)

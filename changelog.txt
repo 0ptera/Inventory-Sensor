@@ -1,3 +1,6 @@
+1.5.3
+- fixed sensors didn't properly reset for vehicles and trains
+
 1.5.2
 - fixed possible integer overflow from mod settings
 
