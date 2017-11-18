@@ -1,5 +1,5 @@
 1.5.4
-- fixed inverntory contents not showing in 1.5.3 
+- fixed inventory contents not showing in 1.5.3 
 
 1.5.3
 - fixed sensors didn't properly reset for vehicles and trains
@@ -15,7 +15,7 @@
 - moved config.lua settings to mod settings
 
 1.4.12
-- fixed ambigous config variables
+- fixed ambiguous config variables
 
 1.4.11
 - deconstruction triggers only if sensors exist
