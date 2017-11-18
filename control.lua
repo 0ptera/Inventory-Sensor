@@ -208,11 +208,11 @@ function SetConnectedEntity(itemSensor)
 			local entity = connectedEntities[i]
 			if entity.valid and SupportedTypes[entity.type] ~= nil then
         -- log("[IS] Sensor "..itemSensor.Sensor.unit_number.." found entity "..tostring(entity.type))
-				itemSensor.ConnectedEntity = entity
-				itemSensor.SkipEntityScanning = SupportedTypes[entity.type]
         if itemSensor.ConnectedEntity ~= entity then
           SetInventories(itemSensor, entity)
         end
+				itemSensor.ConnectedEntity = entity
+				itemSensor.SkipEntityScanning = SupportedTypes[entity.type]
 				return
 			end
 		end
@@ -255,6 +255,7 @@ function UpdateSensor(itemSensor)
 			sensor.get_control_behavior().parameters = nil
 			return
 		end
+    
 	elseif connectedEntity.type == WAGON or connectedEntity.type == WAGONFLUID then
 		if connectedEntity.train.state == defines.train_state.wait_station
 		or connectedEntity.train.state == defines.train_state.wait_signal
@@ -268,6 +269,7 @@ function UpdateSensor(itemSensor)
 			sensor.get_control_behavior().parameters = nil
 			return
 		end
+    
 	elseif connectedEntity.type == CAR then
 		if tostring(connectedEntity.speed) == "0" then --car isn't moving
 			if connectedEntity.name == TANK then
@@ -282,18 +284,17 @@ function UpdateSensor(itemSensor)
 			itemSensor.SkipEntityScanning = false
 			sensor.get_control_behavior().parameters = nil
 			return
-		end
-	end
+		end	
 
 	-- special signals
-	if connectedEntity.type == ASSEMBLER or connectedEntity.type == FURNACE then
+	elseif connectedEntity.type == ASSEMBLER or connectedEntity.type == FURNACE then
 		local progress = connectedEntity.crafting_progress
 		if progress then
 			signals[signalIndex] = {index = signalIndex, signal = {type = "virtual",name = "inv-sensor-progress"},count = floor(progress*100)}
 			signalIndex = signalIndex+1
 		end
-	end
-	if connectedEntity.type == SILO then
+	
+	elseif connectedEntity.type == SILO then
 		-- rocket inventory is nil when no rocket is ready so we have to constantly grab all possible inventories.
 		SetInventories(itemSensor, connectedEntity)
 
@@ -311,8 +312,8 @@ function UpdateSensor(itemSensor)
 
 		signals[signalIndex] = {index = signalIndex, signal = {type = "virtual",name = "inv-sensor-progress"},count = parts}
 		signalIndex = signalIndex+1
-	end
-	if connectedEntity.type == REACTOR then
+	
+	elseif connectedEntity.type == REACTOR then
 		local temp = connectedEntity.temperature
 		if temp then
 			-- log("temp: "..tostring(temp))
