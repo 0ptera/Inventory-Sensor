@@ -76,7 +76,7 @@ function OnEntityCreated(event)
 
 		if #global.ItemSensors == 1 then
 			script.on_event(defines.events.on_tick, OnTick)
-			script.on_event({defines.events.on_preplayer_mined_item, defines.events.on_robot_pre_mined, defines.events.on_entity_died}, OnEntityRemoved)
+			script.on_event({defines.events.on_pre_player_mined_item, defines.events.on_robot_pre_mined, defines.events.on_entity_died}, OnEntityRemoved)
 		end
     
     ResetStride()
@@ -84,7 +84,7 @@ function OnEntityCreated(event)
 end
 
 function OnEntityRemoved(event)
--- script.on_event({defines.events.on_preplayer_mined_item, defines.events.on_robot_pre_mined, defines.events.on_entity_died}, function(event)
+-- script.on_event({defines.events.on_pre_player_mined_item, defines.events.on_robot_pre_mined, defines.events.on_entity_died}, function(event)
 	if event.entity.name == SENSOR then
     for i=#global.ItemSensors, 1, -1 do
       if event.entity.unit_number == global.ItemSensors[i].ID then
@@ -94,7 +94,7 @@ function OnEntityRemoved(event)
 
 		if #global.ItemSensors == 0 then
 			script.on_event(defines.events.on_tick, nil)
-			script.on_event({defines.events.on_preplayer_mined_item, defines.events.on_robot_pre_mined, defines.events.on_entity_died}, nil)
+			script.on_event({defines.events.on_pre_player_mined_item, defines.events.on_robot_pre_mined, defines.events.on_entity_died}, nil)
 		end
     
     ResetStride()
@@ -326,7 +326,7 @@ function UpdateSensor(itemSensor)
 	for i=1, #connectedEntity.fluidbox, 1 do
 		local fluid = connectedEntity.fluidbox[i]
 		if fluid then
-			signals[signalIndex] = {index = signalIndex, signal = {type = "fluid",name = fluid.type},count = ceil(fluid.amount) }
+			signals[signalIndex] = {index = signalIndex, signal = {type = "fluid",name = fluid.name},count = ceil(fluid.amount) }
 			signalIndex = signalIndex+1
 		end
 	end
@@ -350,7 +350,7 @@ local function init_events()
 	script.on_event({defines.events.on_built_entity, defines.events.on_robot_built_entity}, OnEntityCreated)
 	if global.ItemSensors and #global.ItemSensors > 0 then
 		script.on_event(defines.events.on_tick, OnTick)
-		script.on_event({defines.events.on_preplayer_mined_item, defines.events.on_robot_pre_mined, defines.events.on_entity_died}, OnEntityRemoved)
+		script.on_event({defines.events.on_pre_player_mined_item, defines.events.on_robot_pre_mined, defines.events.on_entity_died}, OnEntityRemoved)
 	end
 end
 
