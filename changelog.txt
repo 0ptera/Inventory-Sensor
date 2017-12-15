@@ -1,3 +1,7 @@
+1.6.1
+- updated graphics to match current constant combinator
+- added hr graphics
+
 1.6.0
 - updated to Factorio 0.16
 
