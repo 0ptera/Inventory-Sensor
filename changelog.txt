@@ -1,3 +1,6 @@
+1.6.2
+- read artillery turret and artillery wagon inventories
+
 1.6.1
 - updated graphics to match current constant combinator
 - added hr graphics

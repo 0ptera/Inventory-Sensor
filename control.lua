@@ -6,10 +6,12 @@ local FURNACE = "furnace"
 local REACTOR = "reactor"
 local ROBOPORT = "roboport"
 local SILO = "rocket-silo"
+local ARTILLERY = "artillery-turret"
 local CHEST = "logistic-container" -- requester: type = "logistic-container" && logistic_mode = "requester"
 local LOCO = "locomotive"
 local WAGON = "cargo-wagon"
 local WAGONFLUID = "fluid-wagon"
+local WAGONARTILLERY = "artillery-wagon"
 local CAR = "car"
 local TANK = "tank"
 
@@ -20,11 +22,13 @@ local SupportedTypes = {
 	[REACTOR] = true,
 	[ROBOPORT] = true,
 	[SILO] = true,
+  [ARTILLERY] = true,
 	[CHEST] = true,
 	[CAR] = false,
 	[LOCO] = false,
 	[WAGON] = false,
-	[WAGONFLUID] = false
+	[WAGONFLUID] = false,
+  [WAGONARTILLERY] = false,
 }
 
 local floor = math.floor
@@ -256,7 +260,7 @@ function UpdateSensor(itemSensor)
 			return
 		end
     
-	elseif connectedEntity.type == WAGON or connectedEntity.type == WAGONFLUID then
+	elseif connectedEntity.type == WAGON or connectedEntity.type == WAGONFLUID or connectedEntity.type == WAGONARTILLERY then
 		if connectedEntity.train.state == defines.train_state.wait_station
 		or connectedEntity.train.state == defines.train_state.wait_signal
 		or connectedEntity.train.state == defines.train_state.manual_control then --keeps showing inventory for ScanInterval ticks after movement start > neglect able
@@ -319,7 +323,7 @@ function UpdateSensor(itemSensor)
 			-- log("temp: "..tostring(temp))
 			signals[signalIndex] = {index = signalIndex, signal = {type = "virtual",name = "inv-sensor-temperature"},count = floor(temp+0.5)}
 			signalIndex = signalIndex+1
-		end
+		end      
 	end
 
 	-- get all fluids
