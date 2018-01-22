@@ -3,6 +3,7 @@ local SENSOR = "item-sensor"
 
 local ASSEMBLER = "assembling-machine"
 local FURNACE = "furnace"
+local LAB = "lab"
 local REACTOR = "reactor"
 local ROBOPORT = "roboport"
 local SILO = "rocket-silo"
@@ -19,6 +20,7 @@ local TANK = "tank"
 local SupportedTypes = {
 	[ASSEMBLER] = true,
 	[FURNACE] = true,
+  [LAB] = true,
 	[REACTOR] = true,
 	[ROBOPORT] = true,
 	[SILO] = true,
@@ -298,6 +300,13 @@ function UpdateSensor(itemSensor)
 			signalIndex = signalIndex+1
 		end
 	
+ elseif connectedEntity.type == LAB then
+		local progress = connectedEntity.force.research_progress
+		if progress then
+			signals[signalIndex] = {index = signalIndex, signal = {type = "virtual",name = "inv-sensor-progress"},count = floor(progress*100)}
+			signalIndex = signalIndex+1
+		end 
+  
 	elseif connectedEntity.type == SILO then
 		-- rocket inventory is nil when no rocket is ready so we have to constantly grab all possible inventories.
 		SetInventories(itemSensor, connectedEntity)
