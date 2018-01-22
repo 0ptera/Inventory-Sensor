@@ -1,3 +1,6 @@
+1.6.3
+- read lab inventories and research progress
+
 1.6.2
 - read artillery turret and artillery wagon inventories
 
