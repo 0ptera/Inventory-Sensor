@@ -134,7 +134,7 @@ function OnTick(event)
     global.SensorIndex = lastIndex + 1
   end
 
-  -- reset clock and chest index
+  -- reset clock and index
   if global.tickCount < UpdateInterval then
     global.tickCount = global.tickCount + 1
   else

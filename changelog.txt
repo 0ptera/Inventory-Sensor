@@ -1,3 +1,8 @@
+1.6.4
+- push to stable 0.16.36
+- technology requires circuit network instead of plastics
+- French translation by Shadowaves #6
+
 1.6.3
 - read lab inventories and research progress
 

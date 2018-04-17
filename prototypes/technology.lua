@@ -4,7 +4,7 @@ data:extend({
     name = "item-detection",
     icon = "__Inventory Sensor__/graphics/tech/inventory-sensor.png",
     icon_size = 64,
-    prerequisites = {"plastics", "advanced-electronics"},
+    prerequisites = {"circuit-network", "advanced-electronics"},
     effects =
     {
       {
