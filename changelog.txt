@@ -1,162 +1,204 @@
-1.6.4
-- push to stable 0.16.36
-- technology requires circuit network instead of plastics
-- French translation by Shadowaves #6
-
-1.6.3
-- read lab inventories and research progress
-
-1.6.2
-- read artillery turret and artillery wagon inventories
-
-1.6.1
-- updated graphics to match current constant combinator
-- added hr graphics
-
-1.6.0
-- updated to Factorio 0.16
-
-1.5.4
-- fixed inventory contents not showing in 1.5.3 
-
-1.5.3
-- fixed sensors didn't properly reset for vehicles and trains
-
-1.5.2
-- fixed possible integer overflow from mod settings
-
-1.5.1
-- improved performance by 8% for 120 Sensors
-
-1.5.0
-- bumped required Factorio version to current stable 
-- moved config.lua settings to mod settings
-
-1.4.12
-- fixed ambiguous config variables
-
-1.4.11
-- deconstruction triggers only if sensors exist
-
-1.4.10
-- removed debug logging
-
-1.4.9
-- better icon for progress
-- better icon for temperature
-- fixed progress rounding to 101%
-
-1.4.8
-- fixed missing localization keys
-
-1.4.7
-- fluids are always rounded up to the next integer
-
-1.4.6
-- removed robot count signals
-- migrated signal names to include mod prefix
-- rocket silo properly updates rocket inventory
-
-1.4.5
-- added 64x64 technology icon
-
-1.4.4
-- removed left over debug logging
-
-1.4.3
-- read assembler/furnace progress in %
-- read rocket silo inventory and rocket parts as progress
-- checking all 8 possible inventories every entity when connecting. Nuclear fuelled locomotives properly show burnt results.
-
-1.4.2
-- read Reactor temperature (requires 0.15.7+)
-
-1.4.1
-- read Reactor inventories
-
-1.4.0
-- release for Factorio 0.15
-- read inventories of fluid wagons
-
-1.3.1
-- fixed issue #18 recipe doesn't work when modified by other mod
-
-1.3.0
-- read inventories of logistic requester chests (other chest types are ignored)
-
-1.2.2
-- fixed possible variable conflicts https://forums.factorio.com/viewtopic.php?f=23&t=43392
-
-1.2.1
-- code cleanup
-
-1.2.0
-- read fluids for all entities using assembler prototype
-- removed redundant logistic network bot statistics
-
-1.1.7
-- changed license
-
-1.1.6
-- fixed: logisticNetwork a nil value when connected Roboport is out of power
-- fixed: logistic Network doesn't update when networks split
-
-1.1.5
-- non moving entities are scanned only once
-- inventories of all entities are stored internally for faster update
-
-1.1.4
-- fixed error on remove/destroy
-
-1.1.3
-- performance optimization
-
-1.1.2
-- slight performance improvement thanks to Klonan
-
-1.1.1 (scrapped test version)
-
-1.1.0
-- Sensors now only scan in front (flat side of the combinator)
-- bugfix: placing a sensor after removing the last sensor first would not resubscribe to on_tick
-- added config.lua with paramters for update and scan bounding box
-
-1.0.9
-- update for 0.14.x
-
-1.0.8
-- Performance optimization: distributed updates over update_interval
-
-1.0.7
-- split train-detected signal into wagon and locomotive
-
-1.0.6
-- added Roboports - outputs inventory, all & available bots in network (thanks to Kikkers - Smarter-Circuitry)
-- Outputs detected Entity instead of green
-
-1.0.5
-- added support for cars/tanks
-- Sensor now outputs green=1 if entity is connected
-
-1.0.4
-- Performance optimization: no runtime needed without placed sensors
-- lowered default update intervals
-
-1.0.3
-- Bugfix: MP desync
-
-1.0.2
-- changed name to be more descriptive, added custom sprite
-
-1.0.1
-- Bugfix: Sensors didn't update after loading a save
-
-1.0.0
-- added support for locomotive, cargo-wagon, assembling-machine prototypes
-
-0.1.1
-- performance update
-- added Russian translation (thanks to KroshkaYenot)
-
-0.1.0
-- initial release
+---------------------------------------------------------------------------------------------------
+Version: 1.6.5
+Date: 27.7.2018
+  Features:
+    - read equipment grids of vehicles
+    - added in game changelog
+  Changes:
+    - push to 0.16.51 (stable)
+---------------------------------------------------------------------------------------------------
+Version: 1.6.4
+Date: 17.4.2018
+  Features:
+    - French translation by Shadowaves #6
+  Changes:
+    - push to stable 0.16.36 (stable)
+    - technology requires circuit network instead of plastics
+---------------------------------------------------------------------------------------------------
+Version: 1.6.3
+Date: 22.1.2018
+  Features:
+    - read lab inventories and research progress
+---------------------------------------------------------------------------------------------------
+Version: 1.6.2
+Date: 20.12.2017
+  Features:
+    - read artillery turret and artillery wagon inventories
+---------------------------------------------------------------------------------------------------
+Version: 1.6.1
+Date: 15.12.2017
+  Features:
+    - updated graphics to match current constant combinator
+    - added hr graphics
+---------------------------------------------------------------------------------------------------
+Version: 1.6.0
+Date: 14.12.2017
+  Features:
+    - updated to Factorio 0.16
+---------------------------------------------------------------------------------------------------
+Version: 1.5.4
+Date: 18.11.2017
+  Bugfixes:
+    - inventory contents not showing in 1.5.3
+---------------------------------------------------------------------------------------------------
+Version: 1.5.3
+Date: 17.11.2017
+  Bugfixes:
+    - sensors don't properly reset for vehicles and trains
+---------------------------------------------------------------------------------------------------
+Version: 1.5.2
+Date: 26.8.2017
+  Bugfixes:
+    - prevent possible integer overflow from mod settings
+---------------------------------------------------------------------------------------------------
+Version: 1.5.1
+Date: 19.8.2017
+  Features:
+    - improved performance by 8%
+---------------------------------------------------------------------------------------------------
+Version: 1.5.0
+Date: 18.8.2017
+  Changes:
+    - bumped required Factorio version to current stable
+    - moved config.lua settings to mod settings
+---------------------------------------------------------------------------------------------------
+Version: 1.4.12
+Date: 21.6.2017
+  Bugfixes:
+    - fixed ambiguous config variables
+---------------------------------------------------------------------------------------------------
+Version: 1.4.11
+Date: 21.6.2017
+  Changes:
+    - deconstruction triggers only if sensors exist
+---------------------------------------------------------------------------------------------------
+Version: 1.4.10
+Date: 16.6.2017
+  Changes:
+    - removed debug logging
+---------------------------------------------------------------------------------------------------
+Version: 1.4.9
+Date: 11.6.2017
+  Features:
+    - better icon for progress
+    - better icon for temperature
+  Bugfixes:
+    - progress rounded up to 101%
+---------------------------------------------------------------------------------------------------
+Version: 1.4.8
+Date: 11.6.2017
+  Bugfixes:
+    - fixed missing localization keys
+---------------------------------------------------------------------------------------------------
+Version: 1.4.7
+Date: 5.6.2017
+  Changes:
+    - fluids are always rounded up to the next integer
+---------------------------------------------------------------------------------------------------
+Version: 1.4.6
+Date: 2.6.2017
+  Changes:
+    - removed robot count signals
+    - migrated signal names to include mod prefix
+  Bugfixes:
+    - rocket silo properly updates rocket inventory
+---------------------------------------------------------------------------------------------------
+Version: 1.4.5
+Date: 23.5.2017
+  Features:
+    - added 64x64 technology icon
+---------------------------------------------------------------------------------------------------
+Version: 1.4.4
+Date: 17.5.2017
+  Changes:
+    - removed debug logging
+---------------------------------------------------------------------------------------------------
+Version: 1.4.3
+Date: 17.5.2017
+  Features:
+    - read assembler/furnace progress in %
+    - read rocket silo inventory and rocket parts as progress
+    - checking all 8 possible inventories every entity when connecting. Nuclear fuelled locomotives properly show burnt results.
+---------------------------------------------------------------------------------------------------
+Version: 1.4.2
+Date: 6.5.2017
+  Features:
+    - read Reactor temperature (requires 0.15.7+)
+---------------------------------------------------------------------------------------------------
+Version: 1.4.1
+Date: 29.4.2017
+  Features:
+    - read Reactor inventories
+---------------------------------------------------------------------------------------------------
+Version: 1.4.0
+Date: 25.4.2017
+  Features:
+    - release for Factorio 0.15
+    - read inventories of fluid wagons
+---------------------------------------------------------------------------------------------------
+Version: 1.3.1
+Date: 22.3.2017
+  Bugfixes:
+    - fixed issue #18 recipe doesn't work when modified by other mod
+---------------------------------------------------------------------------------------------------
+Version: 1.3.0
+Date: 22.3.2017
+  Features:
+    - read inventories of logistic requester chests (other chest types are ignored)
+---------------------------------------------------------------------------------------------------
+Version: 1.2.2
+Date: 28.3.2017
+  Bugfixes:
+    - fixed possible variable conflicts https://forums.factorio.com/viewtopic.php?f=23&t=43392
+---------------------------------------------------------------------------------------------------
+Version: 1.2.1
+Date: 23.3.2017
+  Changes:
+    - code cleanup
+---------------------------------------------------------------------------------------------------
+Version: 1.2.0
+Date: 19.3.2017
+  Features:
+    - read fluids for all entities using assembler prototype
+  Changes:
+    - removed redundant logistic network bot statistics
+---------------------------------------------------------------------------------------------------
+Version: 1.1.7
+Date: 21.2.2017
+  Changes:
+    - changed to custom license
+---------------------------------------------------------------------------------------------------
+Version: 1.1.6
+Date: 7.2.2017
+  Bugfixes:
+    - logistic Network a nil value when connected Roboport is out of power
+    - logistic Network doesn't update when networks split
+---------------------------------------------------------------------------------------------------
+Version: 1.1.5
+Date: 17.12.2016
+  Changes:
+    - non moving entities are scanned only once
+    - inventories of all entities are stored internally for faster update
+---------------------------------------------------------------------------------------------------
+Version: 1.1.4
+Date: 24.11.2016
+  Bugfixes:
+    - fixed error on remove/destroy
+---------------------------------------------------------------------------------------------------
+Version: 1.1.3
+Date: 20.11.2016
+  Features:
+    - more performance optimization
+---------------------------------------------------------------------------------------------------
+Version: 1.1.2
+Date: 17.11.2016
+  Features:
+    - slight performance improvement thanks to Klonan
+---------------------------------------------------------------------------------------------------
+Version: 1.1.0
+Date: 13.12.2017
+  Features:
+    - Sensors now only scan in front (flat side of the combinator)
+    - added config.lua with paramters for update and scan bounding box
+  Bugfixes:
+    - placing a sensor after removing the last sensor first would not resubscribe to on_tick

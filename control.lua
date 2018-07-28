@@ -43,6 +43,7 @@ local UpdateInterval = settings.global["inv_sensor_update_interval"].value
 local ScanInterval = settings.global["inv_sensor_find_entity_interval"].value
 local ScanOffset = settings.global["inv_sensor_BBox_offset"].value
 local ScanRange = settings.global["inv_sensor_BBox_range"].value
+local Read_Grid = settings.global["inv_sensor_read_grid"].value
 
 script.on_event(defines.events.on_runtime_mod_setting_changed, function(event)
   if event.setting == "inv_sensor_update_interval" then
@@ -59,6 +60,9 @@ script.on_event(defines.events.on_runtime_mod_setting_changed, function(event)
   if event.setting == "inv_sensor_BBox_range" then
     ScanRange = settings.global["inv_sensor_BBox_range"].value
     ResetSensors()
+  end
+  if event.setting == "inv_sensor_read_grid" then
+    Read_Grid = settings.global["inv_sensor_read_grid"].value
   end
 end)
 
@@ -84,7 +88,7 @@ function OnEntityCreated(event)
 			script.on_event(defines.events.on_tick, OnTick)
 			script.on_event({defines.events.on_pre_player_mined_item, defines.events.on_robot_pre_mined, defines.events.on_entity_died}, OnEntityRemoved)
 		end
-    
+
     ResetStride()
 	end
 end
@@ -102,7 +106,7 @@ function OnEntityRemoved(event)
 			script.on_event(defines.events.on_tick, nil)
 			script.on_event({defines.events.on_pre_player_mined_item, defines.events.on_robot_pre_mined, defines.events.on_entity_died}, nil)
 		end
-    
+
     ResetStride()
 	end
 end
@@ -128,8 +132,8 @@ function OnTick(event)
       if not itemSensor.SkipEntityScanning and (game.tick - itemSensor.LastScanned) >= ScanInterval then
         SetConnectedEntity(itemSensor)
       end
-      
-      UpdateSensor(itemSensor)      
+
+      UpdateSensor(itemSensor)
     end
     global.SensorIndex = lastIndex + 1
   end
@@ -151,8 +155,8 @@ end
     -- local itemSensor = global.ItemSensors[i]
     -- if not itemSensor.SkipEntityScanning and (event.tick - itemSensor.LastScanned) >= ScanInterval then
       -- SetConnectedEntity(itemSensor)
-    -- end    
-    -- UpdateSensor(itemSensor)  
+    -- end
+    -- UpdateSensor(itemSensor)
   -- end
 -- end
 
@@ -222,7 +226,7 @@ function SetConnectedEntity(itemSensor)
 				return
 			end
 		end
-  end  
+  end
   -- if no entity was found remove stored data
   -- log("[IS] Sensor "..itemSensor.Sensor.unit_number.." no entity found")
   itemSensor.ConnectedEntity = nil
@@ -261,7 +265,7 @@ function UpdateSensor(itemSensor)
 			sensor.get_control_behavior().parameters = nil
 			return
 		end
-    
+
 	elseif connectedEntity.type == WAGON or connectedEntity.type == WAGONFLUID or connectedEntity.type == WAGONARTILLERY then
 		if connectedEntity.train.state == defines.train_state.wait_station
 		or connectedEntity.train.state == defines.train_state.wait_signal
@@ -275,7 +279,7 @@ function UpdateSensor(itemSensor)
 			sensor.get_control_behavior().parameters = nil
 			return
 		end
-    
+
 	elseif connectedEntity.type == CAR then
 		if tostring(connectedEntity.speed) == "0" then --car isn't moving
 			if connectedEntity.name == TANK then
@@ -290,7 +294,7 @@ function UpdateSensor(itemSensor)
 			itemSensor.SkipEntityScanning = false
 			sensor.get_control_behavior().parameters = nil
 			return
-		end	
+		end
 
 	-- special signals
 	elseif connectedEntity.type == ASSEMBLER or connectedEntity.type == FURNACE then
@@ -299,14 +303,14 @@ function UpdateSensor(itemSensor)
 			signals[signalIndex] = {index = signalIndex, signal = {type = "virtual",name = "inv-sensor-progress"},count = floor(progress*100)}
 			signalIndex = signalIndex+1
 		end
-	
+
  elseif connectedEntity.type == LAB then
 		local progress = connectedEntity.force.research_progress
 		if progress then
 			signals[signalIndex] = {index = signalIndex, signal = {type = "virtual",name = "inv-sensor-progress"},count = floor(progress*100)}
 			signalIndex = signalIndex+1
-		end 
-  
+		end
+
 	elseif connectedEntity.type == SILO then
 		-- rocket inventory is nil when no rocket is ready so we have to constantly grab all possible inventories.
 		SetInventories(itemSensor, connectedEntity)
@@ -325,21 +329,21 @@ function UpdateSensor(itemSensor)
 
 		signals[signalIndex] = {index = signalIndex, signal = {type = "virtual",name = "inv-sensor-progress"},count = parts}
 		signalIndex = signalIndex+1
-	
+
 	elseif connectedEntity.type == REACTOR then
 		local temp = connectedEntity.temperature
 		if temp then
 			-- log("temp: "..tostring(temp))
 			signals[signalIndex] = {index = signalIndex, signal = {type = "virtual",name = "inv-sensor-temperature"},count = floor(temp+0.5)}
 			signalIndex = signalIndex+1
-		end      
+		end
 	end
 
 	-- get all fluids
 	for i=1, #connectedEntity.fluidbox, 1 do
 		local fluid = connectedEntity.fluidbox[i]
 		if fluid then
-			signals[signalIndex] = {index = signalIndex, signal = {type = "fluid",name = fluid.name},count = ceil(fluid.amount) }
+			signals[signalIndex] = { index = signalIndex, signal = {type = "fluid",name = fluid.name}, count = ceil(fluid.amount) }
 			signalIndex = signalIndex+1
 		end
 	end
@@ -348,14 +352,26 @@ function UpdateSensor(itemSensor)
 	for _, inv in pairs(itemSensor.Inventory) do
 		local contentsTable = inv.get_contents()
 		for k,v in pairs(contentsTable) do
-			signals[signalIndex] = {index = signalIndex, signal = {type = "item",name = k},count = v }
+			signals[signalIndex] = { index = signalIndex, signal = {type = "item",name = k}, count = v }
 			signalIndex = signalIndex+1
 		end
 	end
 
+  -- get equipment grids if available
+  if Read_Grid and connectedEntity.grid then
+    -- log("Grid contents:\n"..serpent.block(connectedEntity.grid.get_contents()))
+    -- grid.get_contents() returns equipment.name while signal needs item.name
+    local grid_equipment = connectedEntity.grid.equipment
+    for _, equipment in pairs(grid_equipment) do
+      local item_name = equipment.prototype.take_result.name
+      -- adding a signal with count 1 per equipment and letting factorio group them seems to be slightly faster than grouping in lua
+      signals[signalIndex] = { index = signalIndex, signal = {type = "item",name = item_name}, count = 1 }
+      signalIndex = signalIndex+1
+    end
+  end
+
 	sensor.get_control_behavior().parameters = {parameters=signals}
 end
-
 
 ---- INIT ----
 do
