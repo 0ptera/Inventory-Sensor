@@ -24,18 +24,18 @@ data:extend({
     setting_type = "runtime-global",
     default_value = true,
   },
-	{
+  {
     type = "double-setting",
     name = "inv_sensor_BBox_offset",
     order = "ca",
     setting_type = "runtime-global",
-		default_value = 0.2,
+    default_value = 0.2,
   },
   {
     type = "double-setting",
     name = "inv_sensor_BBox_range",
     order = "cb",
     setting_type = "runtime-global",
-		default_value = 1.5,
+    default_value = 1.5,
   },
 })

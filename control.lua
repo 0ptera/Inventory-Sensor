@@ -70,7 +70,7 @@ end)
 ---- EVENTS ----
 
 function OnEntityCreated(event)
-	if (event.created_entity.name == "item-sensor") then
+	if (event.created_entity.name == SENSOR) then
     local entity = event.created_entity
     global.ItemSensors = global.ItemSensors or {}
 
@@ -165,7 +165,7 @@ end
 -- recalculates how many sensors are updated each tick
 function ResetStride()
   if #global.ItemSensors > UpdateInterval then
-    global.SensorStride =  math.ceil(#global.ItemSensors/UpdateInterval)
+    global.SensorStride =  ceil(#global.ItemSensors/UpdateInterval)
   else
     global.SensorStride = 1
   end
@@ -234,6 +234,14 @@ function SetConnectedEntity(itemSensor)
   itemSensor.Inventory = {}
 end
 
+
+local parameter_locomotive = {index=1, signal={type="virtual",name="inv-sensor-detected-locomotive"}, count=1}
+local parameter_wagon = {index=1, signal={type="virtual",name="inv-sensor-detected-wagon"}, count=1}
+local parameter_car = {index=1, signal={type="virtual",name="inv-sensor-detected-car"}, count=1}
+local parameter_tank = {index=1, signal={type="virtual",name="inv-sensor-detected-tank"}, count=1}
+local signal_progress = {type = "virtual",name = "inv-sensor-progress"}
+local signal_temperature = {type = "virtual",name = "inv-sensor-temperature"}
+
 function UpdateSensor(itemSensor)
 	local sensor = itemSensor.Sensor
 	local connectedEntity = itemSensor.ConnectedEntity
@@ -256,8 +264,8 @@ function UpdateSensor(itemSensor)
 		if connectedEntity.train.state == defines.train_state.wait_station
 		or connectedEntity.train.state == defines.train_state.wait_signal
 		or connectedEntity.train.state == defines.train_state.manual_control then --keeps showing inventory for ScanInterval ticks after movement start > neglect able
-			signals[signalIndex] = {index = signalIndex, signal={type="virtual",name="inv-sensor-detected-locomotive"},count=1}
-			signalIndex = signalIndex+1
+			signals[signalIndex] = parameter_locomotive
+			signalIndex = 2
 		else -- train is moving > remove connection
 			itemSensor.ConnectedEntity = nil
 			itemSensor.Inventory = {}
@@ -270,8 +278,8 @@ function UpdateSensor(itemSensor)
 		if connectedEntity.train.state == defines.train_state.wait_station
 		or connectedEntity.train.state == defines.train_state.wait_signal
 		or connectedEntity.train.state == defines.train_state.manual_control then --keeps showing inventory for ScanInterval ticks after movement start > neglect able
-			signals[signalIndex] = {index = signalIndex, signal={type="virtual",name="inv-sensor-detected-wagon"},count=1}
-			signalIndex = signalIndex+1
+			signals[signalIndex] = parameter_wagon
+			signalIndex = 2
 		else -- train is moving > remove connection
 			itemSensor.ConnectedEntity = nil
 			itemSensor.Inventory = {}
@@ -283,11 +291,11 @@ function UpdateSensor(itemSensor)
 	elseif connectedEntity.type == CAR then
 		if tostring(connectedEntity.speed) == "0" then --car isn't moving
 			if connectedEntity.name == TANK then
-				signals[signalIndex] = {index = signalIndex, signal={type="virtual",name="inv-sensor-detected-tank"},count=1}
+				signals[signalIndex] = parameter_tank
 			else
-				signals[signalIndex] = {index = signalIndex, signal={type="virtual",name="inv-sensor-detected-car"},count=1}
+				signals[signalIndex] = parameter_car
 			end
-			signalIndex = signalIndex+1
+			signalIndex = 2
 		else -- car is moving > remove connection
 			itemSensor.ConnectedEntity = nil
 			itemSensor.Inventory = {}
@@ -300,14 +308,14 @@ function UpdateSensor(itemSensor)
 	elseif connectedEntity.type == ASSEMBLER or connectedEntity.type == FURNACE then
 		local progress = connectedEntity.crafting_progress
 		if progress then
-			signals[signalIndex] = {index = signalIndex, signal = {type = "virtual",name = "inv-sensor-progress"},count = floor(progress*100)}
+			signals[signalIndex] = {index = signalIndex, signal = signal_progress, count = floor(progress*100)}
 			signalIndex = signalIndex+1
 		end
 
  elseif connectedEntity.type == LAB then
 		local progress = connectedEntity.force.research_progress
 		if progress then
-			signals[signalIndex] = {index = signalIndex, signal = {type = "virtual",name = "inv-sensor-progress"},count = floor(progress*100)}
+			signals[signalIndex] = {index = signalIndex, signal = signal_progress, count = floor(progress*100)}
 			signalIndex = signalIndex+1
 		end
 
@@ -327,14 +335,14 @@ function UpdateSensor(itemSensor)
 		-- log("Silo Status: "..tostring(itemSensor.SiloStatus))
 		if itemSensor.SiloStatus and parts < 90 then parts = 100 end
 
-		signals[signalIndex] = {index = signalIndex, signal = {type = "virtual",name = "inv-sensor-progress"},count = parts}
+		signals[signalIndex] = {index = signalIndex, signal = signal_progress, count = parts}
 		signalIndex = signalIndex+1
 
 	elseif connectedEntity.type == REACTOR then
 		local temp = connectedEntity.temperature
 		if temp then
 			-- log("temp: "..tostring(temp))
-			signals[signalIndex] = {index = signalIndex, signal = {type = "virtual",name = "inv-sensor-temperature"},count = floor(temp+0.5)}
+			signals[signalIndex] = {index = signalIndex, signal = signal_temperature ,count = floor(temp+0.5)}
 			signalIndex = signalIndex+1
 		end
 	end
