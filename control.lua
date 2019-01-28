@@ -18,18 +18,18 @@ local TANK = "tank"
 
 -- initialize variables
 local SupportedTypes = {
-	[ASSEMBLER] = true,
-	[FURNACE] = true,
+  [ASSEMBLER] = true,
+  [FURNACE] = true,
   [LAB] = true,
-	[REACTOR] = true,
-	[ROBOPORT] = true,
-	[SILO] = true,
+  [REACTOR] = true,
+  [ROBOPORT] = true,
+  [SILO] = true,
   [ARTILLERY] = true,
-	[CHEST] = true,
-	[CAR] = false,
-	[LOCO] = false,
-	[WAGON] = false,
-	[WAGONFLUID] = false,
+  [CHEST] = true,
+  [CAR] = false,
+  [LOCO] = false,
+  [WAGON] = false,
+  [WAGONFLUID] = false,
   [WAGONARTILLERY] = false,
 }
 
@@ -70,7 +70,7 @@ end)
 ---- EVENTS ----
 
 function OnEntityCreated(event)
-	if (event.created_entity.name == SENSOR) then
+  if (event.created_entity.name == SENSOR) then
     local entity = event.created_entity
     global.ItemSensors = global.ItemSensors or {}
 
@@ -84,31 +84,36 @@ function OnEntityCreated(event)
 
     global.ItemSensors[#global.ItemSensors+1] = itemSensor
 
-		if #global.ItemSensors == 1 then
-			script.on_event(defines.events.on_tick, OnTick)
-			script.on_event({defines.events.on_pre_player_mined_item, defines.events.on_robot_pre_mined, defines.events.on_entity_died}, OnEntityRemoved)
-		end
+    if #global.ItemSensors == 1 then
+      script.on_event(defines.events.on_tick, OnTick)
+      script.on_event({defines.events.on_pre_player_mined_item, defines.events.on_robot_pre_mined, defines.events.on_entity_died}, OnEntityRemoved)
+    end
 
     ResetStride()
-	end
+  end
+end
+
+-- called from on_entity_removed and when entity becomes invalid
+function RemoveSensor(sensorID)
+  for i=#global.ItemSensors, 1, -1 do
+    if global.ItemSensors[i].ID == sensorID then
+      table.remove(global.ItemSensors,i)
+    end
+  end
+
+  if #global.ItemSensors == 0 then
+    script.on_event(defines.events.on_tick, nil)
+    script.on_event({defines.events.on_pre_player_mined_item, defines.events.on_robot_pre_mined, defines.events.on_entity_died}, nil)
+  end
+
+  ResetStride()
 end
 
 function OnEntityRemoved(event)
 -- script.on_event({defines.events.on_pre_player_mined_item, defines.events.on_robot_pre_mined, defines.events.on_entity_died}, function(event)
-	if event.entity.name == SENSOR then
-    for i=#global.ItemSensors, 1, -1 do
-      if event.entity.unit_number == global.ItemSensors[i].ID then
-        table.remove(global.ItemSensors,i)
-      end
-    end
-
-		if #global.ItemSensors == 0 then
-			script.on_event(defines.events.on_tick, nil)
-			script.on_event({defines.events.on_pre_player_mined_item, defines.events.on_robot_pre_mined, defines.events.on_entity_died}, nil)
-		end
-
-    ResetStride()
-	end
+  if event.entity.name == SENSOR then
+    RemoveSensor(event.entity.unit_number)
+  end
 end
 
 
@@ -175,57 +180,57 @@ end
 
 function ResetSensors()
   global.ItemSensors = global.ItemSensors or {}
-	for i=1, #global.ItemSensors do
-		local itemSensor = global.ItemSensors[i]
-		itemSensor.ID = itemSensor.Sensor.unit_number
-		itemSensor.ScanArea = GetScanArea(itemSensor.Sensor)
-		itemSensor.ConnectedEntity = nil
-		itemSensor.Inventory = {}
-		SetConnectedEntity(itemSensor)
-	end
+  for i=1, #global.ItemSensors do
+    local itemSensor = global.ItemSensors[i]
+    itemSensor.ID = itemSensor.Sensor.unit_number
+    itemSensor.ScanArea = GetScanArea(itemSensor.Sensor)
+    itemSensor.ConnectedEntity = nil
+    itemSensor.Inventory = {}
+    SetConnectedEntity(itemSensor)
+  end
 end
 
 function GetScanArea(sensor)
-	if sensor.direction == 0 then --south
-		 return{{sensor.position.x - ScanOffset, sensor.position.y}, {sensor.position.x + ScanOffset, sensor.position.y + ScanRange}}
-	elseif sensor.direction == 2 then --west
-		return{{sensor.position.x - ScanRange, sensor.position.y - ScanOffset}, {sensor.position.x, sensor.position.y + ScanOffset}}
-	elseif sensor.direction == 4 then --north
-		return{{sensor.position.x - ScanOffset, sensor.position.y - ScanRange}, {sensor.position.x + ScanOffset, sensor.position.y}}
-	elseif sensor.direction == 6 then --east
-		return{{sensor.position.x, sensor.position.y - ScanOffset}, {sensor.position.x + ScanRange, sensor.position.y + ScanOffset}}
-	end
+  if sensor.direction == 0 then --south
+     return{{sensor.position.x - ScanOffset, sensor.position.y}, {sensor.position.x + ScanOffset, sensor.position.y + ScanRange}}
+  elseif sensor.direction == 2 then --west
+    return{{sensor.position.x - ScanRange, sensor.position.y - ScanOffset}, {sensor.position.x, sensor.position.y + ScanOffset}}
+  elseif sensor.direction == 4 then --north
+    return{{sensor.position.x - ScanOffset, sensor.position.y - ScanRange}, {sensor.position.x + ScanOffset, sensor.position.y}}
+  elseif sensor.direction == 6 then --east
+    return{{sensor.position.x, sensor.position.y - ScanOffset}, {sensor.position.x + ScanRange, sensor.position.y + ScanOffset}}
+  end
 end
 
 function SetInventories(itemSensor, entity)
-	itemSensor.Inventory = {}
-	local inv = nil
-	for i=1, 8 do -- iterate blindly over every possible inventory and store the result so we have to do it only once
-		inv = entity.get_inventory(i)
-		if inv then
-			itemSensor.Inventory[#itemSensor.Inventory+1] = inv
-			-- log("[IS] adding inventory "..tostring(inv.index))
-		end
-	end
+  itemSensor.Inventory = {}
+  local inv = nil
+  for i=1, 8 do -- iterate blindly over every possible inventory and store the result so we have to do it only once
+    inv = entity.get_inventory(i)
+    if inv then
+      itemSensor.Inventory[#itemSensor.Inventory+1] = inv
+      -- log("[IS] adding inventory "..tostring(inv.index))
+    end
+  end
 end
 
 function SetConnectedEntity(itemSensor)
   itemSensor.LastScanned = game.tick
-	local connectedEntities = itemSensor.Sensor.surface.find_entities(itemSensor.ScanArea)
-	--printmsg("[IS] Found "..#connectedEntities.." entities in direction "..sensor.direction)
-	if connectedEntities then
-		for i=1, #connectedEntities do
-			local entity = connectedEntities[i]
-			if entity.valid and SupportedTypes[entity.type] ~= nil then
+  local connectedEntities = itemSensor.Sensor.surface.find_entities(itemSensor.ScanArea)
+  --printmsg("[IS] Found "..#connectedEntities.." entities in direction "..sensor.direction)
+  if connectedEntities then
+    for i=1, #connectedEntities do
+      local entity = connectedEntities[i]
+      if entity.valid and SupportedTypes[entity.type] ~= nil then
         -- log("[IS] Sensor "..itemSensor.Sensor.unit_number.." found entity "..tostring(entity.type))
         if itemSensor.ConnectedEntity ~= entity then
           SetInventories(itemSensor, entity)
         end
-				itemSensor.ConnectedEntity = entity
-				itemSensor.SkipEntityScanning = SupportedTypes[entity.type]
-				return
-			end
-		end
+        itemSensor.ConnectedEntity = entity
+        itemSensor.SkipEntityScanning = SupportedTypes[entity.type]
+        return
+      end
+    end
   end
   -- if no entity was found remove stored data
   -- log("[IS] Sensor "..itemSensor.Sensor.unit_number.." no entity found")
@@ -243,127 +248,133 @@ local signal_progress = {type = "virtual",name = "inv-sensor-progress"}
 local signal_temperature = {type = "virtual",name = "inv-sensor-temperature"}
 
 function UpdateSensor(itemSensor)
-	local sensor = itemSensor.Sensor
-	local connectedEntity = itemSensor.ConnectedEntity
+  local sensor = itemSensor.Sensor
+  local connectedEntity = itemSensor.ConnectedEntity
 
-	-- clear output of invalid connections
-	if not connectedEntity or not connectedEntity.valid or not itemSensor.Inventory then
-		itemSensor.ConnectedEntity = nil
-		itemSensor.Inventory = {}
-		itemSensor.SkipEntityScanning = false
-		itemSensor.SiloStatus = nil
-		sensor.get_control_behavior().parameters = nil
-		return
-	end
+  -- remove invalidated sensors
+  if not sensor.valid then
+    RemoveSensor(itemSensor.ID)
+    return
+  end
 
-	local signals = {}
-	local signalIndex = 1
+  -- clear output of invalid connections
+  if not connectedEntity or not connectedEntity.valid or not itemSensor.Inventory then
+    itemSensor.ConnectedEntity = nil
+    itemSensor.Inventory = {}
+    itemSensor.SkipEntityScanning = false
+    itemSensor.SiloStatus = nil
+    sensor.get_control_behavior().parameters = nil
+    return
+  end
 
-	-- Vehicle signals and movement detection
-	if connectedEntity.type == LOCO then
-		if connectedEntity.train.state == defines.train_state.wait_station
-		or connectedEntity.train.state == defines.train_state.wait_signal
-		or connectedEntity.train.state == defines.train_state.manual_control then --keeps showing inventory for ScanInterval ticks after movement start > neglect able
-			signals[signalIndex] = parameter_locomotive
-			signalIndex = 2
-		else -- train is moving > remove connection
-			itemSensor.ConnectedEntity = nil
-			itemSensor.Inventory = {}
-			itemSensor.SkipEntityScanning = false
-			sensor.get_control_behavior().parameters = nil
-			return
-		end
+  local signals = {}
+  local signalIndex = 1
 
-	elseif connectedEntity.type == WAGON or connectedEntity.type == WAGONFLUID or connectedEntity.type == WAGONARTILLERY then
-		if connectedEntity.train.state == defines.train_state.wait_station
-		or connectedEntity.train.state == defines.train_state.wait_signal
-		or connectedEntity.train.state == defines.train_state.manual_control then --keeps showing inventory for ScanInterval ticks after movement start > neglect able
-			signals[signalIndex] = parameter_wagon
-			signalIndex = 2
-		else -- train is moving > remove connection
-			itemSensor.ConnectedEntity = nil
-			itemSensor.Inventory = {}
-			itemSensor.SkipEntityScanning = false
-			sensor.get_control_behavior().parameters = nil
-			return
-		end
+  -- Vehicle signals and movement detection
+  if connectedEntity.type == LOCO then
+    if connectedEntity.train.state == defines.train_state.wait_station
+    or connectedEntity.train.state == defines.train_state.wait_signal
+    or connectedEntity.train.state == defines.train_state.manual_control then --keeps showing inventory for ScanInterval ticks after movement start > neglect able
+      signals[signalIndex] = parameter_locomotive
+      signalIndex = 2
+    else -- train is moving > remove connection
+      itemSensor.ConnectedEntity = nil
+      itemSensor.Inventory = {}
+      itemSensor.SkipEntityScanning = false
+      sensor.get_control_behavior().parameters = nil
+      return
+    end
 
-	elseif connectedEntity.type == CAR then
-		if tostring(connectedEntity.speed) == "0" then --car isn't moving
-			if connectedEntity.name == TANK then
-				signals[signalIndex] = parameter_tank
-			else
-				signals[signalIndex] = parameter_car
-			end
-			signalIndex = 2
-		else -- car is moving > remove connection
-			itemSensor.ConnectedEntity = nil
-			itemSensor.Inventory = {}
-			itemSensor.SkipEntityScanning = false
-			sensor.get_control_behavior().parameters = nil
-			return
-		end
+  elseif connectedEntity.type == WAGON or connectedEntity.type == WAGONFLUID or connectedEntity.type == WAGONARTILLERY then
+    if connectedEntity.train.state == defines.train_state.wait_station
+    or connectedEntity.train.state == defines.train_state.wait_signal
+    or connectedEntity.train.state == defines.train_state.manual_control then --keeps showing inventory for ScanInterval ticks after movement start > neglect able
+      signals[signalIndex] = parameter_wagon
+      signalIndex = 2
+    else -- train is moving > remove connection
+      itemSensor.ConnectedEntity = nil
+      itemSensor.Inventory = {}
+      itemSensor.SkipEntityScanning = false
+      sensor.get_control_behavior().parameters = nil
+      return
+    end
 
-	-- special signals
-	elseif connectedEntity.type == ASSEMBLER or connectedEntity.type == FURNACE then
-		local progress = connectedEntity.crafting_progress
-		if progress then
-			signals[signalIndex] = {index = signalIndex, signal = signal_progress, count = floor(progress*100)}
-			signalIndex = signalIndex+1
-		end
+  elseif connectedEntity.type == CAR then
+    if tostring(connectedEntity.speed) == "0" then --car isn't moving
+      if connectedEntity.name == TANK then
+        signals[signalIndex] = parameter_tank
+      else
+        signals[signalIndex] = parameter_car
+      end
+      signalIndex = 2
+    else -- car is moving > remove connection
+      itemSensor.ConnectedEntity = nil
+      itemSensor.Inventory = {}
+      itemSensor.SkipEntityScanning = false
+      sensor.get_control_behavior().parameters = nil
+      return
+    end
+
+  -- special signals
+  elseif connectedEntity.type == ASSEMBLER or connectedEntity.type == FURNACE then
+    local progress = connectedEntity.crafting_progress
+    if progress then
+      signals[signalIndex] = {index = signalIndex, signal = signal_progress, count = floor(progress*100)}
+      signalIndex = signalIndex+1
+    end
 
  elseif connectedEntity.type == LAB then
-		local progress = connectedEntity.force.research_progress
-		if progress then
-			signals[signalIndex] = {index = signalIndex, signal = signal_progress, count = floor(progress*100)}
-			signalIndex = signalIndex+1
-		end
+    local progress = connectedEntity.force.research_progress
+    if progress then
+      signals[signalIndex] = {index = signalIndex, signal = signal_progress, count = floor(progress*100)}
+      signalIndex = signalIndex+1
+    end
 
-	elseif connectedEntity.type == SILO then
-		-- rocket inventory is nil when no rocket is ready so we have to constantly grab all possible inventories.
-		SetInventories(itemSensor, connectedEntity)
+  elseif connectedEntity.type == SILO then
+    -- rocket inventory is nil when no rocket is ready so we have to constantly grab all possible inventories.
+    SetInventories(itemSensor, connectedEntity)
 
-		local parts = connectedEntity.rocket_parts
+    local parts = connectedEntity.rocket_parts
 
-		if itemSensor.SiloStatus == nil and parts >= 90 then
-			itemSensor.SiloStatus = 1 -- rocket built
-		elseif itemSensor.SiloStatus == 1 and connectedEntity.get_inventory(defines.inventory.rocket_silo_rocket) then
-			itemSensor.SiloStatus = 2 -- rocket ready
-		elseif itemSensor.SiloStatus == 2 and not connectedEntity.get_inventory(defines.inventory.rocket_silo_rocket) then
-			itemSensor.SiloStatus = nil -- rocket has been launched
-		end
-		-- log("Silo Status: "..tostring(itemSensor.SiloStatus))
-		if itemSensor.SiloStatus and parts < 90 then parts = 100 end
+    if itemSensor.SiloStatus == nil and parts >= 90 then
+      itemSensor.SiloStatus = 1 -- rocket built
+    elseif itemSensor.SiloStatus == 1 and connectedEntity.get_inventory(defines.inventory.rocket_silo_rocket) then
+      itemSensor.SiloStatus = 2 -- rocket ready
+    elseif itemSensor.SiloStatus == 2 and not connectedEntity.get_inventory(defines.inventory.rocket_silo_rocket) then
+      itemSensor.SiloStatus = nil -- rocket has been launched
+    end
+    -- log("Silo Status: "..tostring(itemSensor.SiloStatus))
+    if itemSensor.SiloStatus and parts < 90 then parts = 100 end
 
-		signals[signalIndex] = {index = signalIndex, signal = signal_progress, count = parts}
-		signalIndex = signalIndex+1
+    signals[signalIndex] = {index = signalIndex, signal = signal_progress, count = parts}
+    signalIndex = signalIndex+1
 
-	elseif connectedEntity.type == REACTOR then
-		local temp = connectedEntity.temperature
-		if temp then
-			-- log("temp: "..tostring(temp))
-			signals[signalIndex] = {index = signalIndex, signal = signal_temperature ,count = floor(temp+0.5)}
-			signalIndex = signalIndex+1
-		end
-	end
+  elseif connectedEntity.type == REACTOR then
+    local temp = connectedEntity.temperature
+    if temp then
+      -- log("temp: "..tostring(temp))
+      signals[signalIndex] = {index = signalIndex, signal = signal_temperature ,count = floor(temp+0.5)}
+      signalIndex = signalIndex+1
+    end
+  end
 
-	-- get all fluids
-	for i=1, #connectedEntity.fluidbox, 1 do
-		local fluid = connectedEntity.fluidbox[i]
-		if fluid then
-			signals[signalIndex] = { index = signalIndex, signal = {type = "fluid",name = fluid.name}, count = ceil(fluid.amount) }
-			signalIndex = signalIndex+1
-		end
-	end
+  -- get all fluids
+  for i=1, #connectedEntity.fluidbox, 1 do
+    local fluid = connectedEntity.fluidbox[i]
+    if fluid then
+      signals[signalIndex] = { index = signalIndex, signal = {type = "fluid",name = fluid.name}, count = ceil(fluid.amount) }
+      signalIndex = signalIndex+1
+    end
+  end
 
-	-- get items in all inventories
-	for _, inv in pairs(itemSensor.Inventory) do
-		local contentsTable = inv.get_contents()
-		for k,v in pairs(contentsTable) do
-			signals[signalIndex] = { index = signalIndex, signal = {type = "item",name = k}, count = v }
-			signalIndex = signalIndex+1
-		end
-	end
+  -- get items in all inventories
+  for _, inv in pairs(itemSensor.Inventory) do
+    local contentsTable = inv.get_contents()
+    for k,v in pairs(contentsTable) do
+      signals[signalIndex] = { index = signalIndex, signal = {type = "item",name = k}, count = v }
+      signalIndex = signalIndex+1
+    end
+  end
 
   -- get equipment grids if available
   if Read_Grid and connectedEntity.grid then
@@ -378,17 +389,17 @@ function UpdateSensor(itemSensor)
     end
   end
 
-	sensor.get_control_behavior().parameters = {parameters=signals}
+  sensor.get_control_behavior().parameters = {parameters=signals}
 end
 
 ---- INIT ----
 do
 local function init_events()
-	script.on_event({defines.events.on_built_entity, defines.events.on_robot_built_entity}, OnEntityCreated)
-	if global.ItemSensors and #global.ItemSensors > 0 then
-		script.on_event(defines.events.on_tick, OnTick)
-		script.on_event({defines.events.on_pre_player_mined_item, defines.events.on_robot_pre_mined, defines.events.on_entity_died}, OnEntityRemoved)
-	end
+  script.on_event({defines.events.on_built_entity, defines.events.on_robot_built_entity}, OnEntityCreated)
+  if global.ItemSensors and #global.ItemSensors > 0 then
+    script.on_event(defines.events.on_tick, OnTick)
+    script.on_event({defines.events.on_pre_player_mined_item, defines.events.on_robot_pre_mined, defines.events.on_entity_died}, OnEntityRemoved)
+  end
 end
 
 script.on_load(function()
@@ -404,7 +415,7 @@ end)
 script.on_configuration_changed(function(data)
   ResetSensors()
   ResetStride()
-	init_events()
+  init_events()
   log("[IS] on_config_changed complete.")
 end)
 
