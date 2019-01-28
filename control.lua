@@ -93,21 +93,26 @@ function OnEntityCreated(event)
 	end
 end
 
+-- called from on_entity_removed and when entity becomes invalid
+function RemoveSensor(sensorID)
+  for i=#global.ItemSensors, 1, -1 do
+    if global.ItemSensors[i].ID == sensorID then
+      table.remove(global.ItemSensors,i)
+    end
+  end
+
+  if #global.ItemSensors == 0 then
+    script.on_event(defines.events.on_tick, nil)
+    script.on_event({defines.events.on_pre_player_mined_item, defines.events.on_robot_pre_mined, defines.events.on_entity_died}, nil)
+  end
+
+  ResetStride()
+end
+
 function OnEntityRemoved(event)
 -- script.on_event({defines.events.on_pre_player_mined_item, defines.events.on_robot_pre_mined, defines.events.on_entity_died}, function(event)
 	if event.entity.name == SENSOR then
-    for i=#global.ItemSensors, 1, -1 do
-      if event.entity.unit_number == global.ItemSensors[i].ID then
-        table.remove(global.ItemSensors,i)
-      end
-    end
-
-		if #global.ItemSensors == 0 then
-			script.on_event(defines.events.on_tick, nil)
-			script.on_event({defines.events.on_pre_player_mined_item, defines.events.on_robot_pre_mined, defines.events.on_entity_died}, nil)
-		end
-
-    ResetStride()
+    RemoveSensor(event.entity.unit_number)
 	end
 end
 
@@ -246,6 +251,12 @@ function UpdateSensor(itemSensor)
 	local sensor = itemSensor.Sensor
 	local connectedEntity = itemSensor.ConnectedEntity
 
+  -- remove invalidated sensors
+  if not sensor.valid then
+    RemoveSensor(itemSensor.ID)
+    return
+  end
+  
 	-- clear output of invalid connections
 	if not connectedEntity or not connectedEntity.valid or not itemSensor.Inventory then
 		itemSensor.ConnectedEntity = nil
