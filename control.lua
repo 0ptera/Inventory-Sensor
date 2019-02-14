@@ -1,4 +1,5 @@
 -- constant prototypes names
+local MOD_NAME = "Inventory Sensor"
 local SENSOR = "item-sensor"
 
 local ASSEMBLER = "assembling-machine"
@@ -32,6 +33,14 @@ local SupportedTypes = {
   [WAGONFLUID] = false,
   [WAGONARTILLERY] = false,
 }
+
+local parameter_locomotive = {index=1, signal={type="virtual",name="inv-sensor-detected-locomotive"}, count=1}
+local parameter_wagon = {index=1, signal={type="virtual",name="inv-sensor-detected-wagon"}, count=1}
+local parameter_car = {index=1, signal={type="virtual",name="inv-sensor-detected-car"}, count=1}
+local parameter_tank = {index=1, signal={type="virtual",name="inv-sensor-detected-tank"}, count=1}
+local signal_progress = {type = "virtual",name = "inv-sensor-progress"}
+local signal_temperature = {type = "virtual",name = "inv-sensor-temperature"}
+local signal_fuel = {type = "virtual",name = "inv-sensor-fuel"}
 
 local floor = math.floor
 local ceil = math.ceil
@@ -202,14 +211,14 @@ function GetScanArea(sensor)
   end
 end
 
+-- cache inventories, keep inventory index
 function SetInventories(itemSensor, entity)
   itemSensor.Inventory = {}
   local inv = nil
   for i=1, 8 do -- iterate blindly over every possible inventory and store the result so we have to do it only once
     inv = entity.get_inventory(i)
     if inv then
-      itemSensor.Inventory[#itemSensor.Inventory+1] = inv
-      -- log("[IS] adding inventory "..tostring(inv.index))
+      itemSensor.Inventory[i] = inv
     end
   end
 end
@@ -240,13 +249,6 @@ function SetConnectedEntity(itemSensor)
 end
 
 
-local parameter_locomotive = {index=1, signal={type="virtual",name="inv-sensor-detected-locomotive"}, count=1}
-local parameter_wagon = {index=1, signal={type="virtual",name="inv-sensor-detected-wagon"}, count=1}
-local parameter_car = {index=1, signal={type="virtual",name="inv-sensor-detected-car"}, count=1}
-local parameter_tank = {index=1, signal={type="virtual",name="inv-sensor-detected-tank"}, count=1}
-local signal_progress = {type = "virtual",name = "inv-sensor-progress"}
-local signal_temperature = {type = "virtual",name = "inv-sensor-temperature"}
-
 function UpdateSensor(itemSensor)
   local sensor = itemSensor.Sensor
   local connectedEntity = itemSensor.ConnectedEntity
@@ -267,6 +269,8 @@ function UpdateSensor(itemSensor)
     return
   end
 
+  local burner = connectedEntity.burner -- caching burner makes no difference in performance
+  local remaining_fuel = 0
   local signals = {}
   local signalIndex = 1
 
@@ -335,27 +339,29 @@ function UpdateSensor(itemSensor)
     SetInventories(itemSensor, connectedEntity)
 
     local parts = connectedEntity.rocket_parts
-
-    if itemSensor.SiloStatus == nil and parts >= 90 then
-      itemSensor.SiloStatus = 1 -- rocket built
+    -- rocket_parts becomes 0 when a rocket is built and lifted up for launch
+    -- we display 100 until it takes off
+    if itemSensor.SiloStatus == nil and parts > 0 then
+      itemSensor.SiloStatus = 1 -- building rocket
     elseif itemSensor.SiloStatus == 1 and connectedEntity.get_inventory(defines.inventory.rocket_silo_rocket) then
       itemSensor.SiloStatus = 2 -- rocket ready
     elseif itemSensor.SiloStatus == 2 and not connectedEntity.get_inventory(defines.inventory.rocket_silo_rocket) then
       itemSensor.SiloStatus = nil -- rocket has been launched
     end
-    -- log("Silo Status: "..tostring(itemSensor.SiloStatus))
-    if itemSensor.SiloStatus and parts < 90 then parts = 100 end
+    if itemSensor.SiloStatus and parts == 0 then parts = 100 end
 
     signals[signalIndex] = {index = signalIndex, signal = signal_progress, count = parts}
     signalIndex = signalIndex+1
 
-  elseif connectedEntity.type == REACTOR then
-    local temp = connectedEntity.temperature
-    if temp then
-      -- log("temp: "..tostring(temp))
-      signals[signalIndex] = {index = signalIndex, signal = signal_temperature ,count = floor(temp+0.5)}
-      signalIndex = signalIndex+1
-    end
+  -- elseif connectedEntity.type == REACTOR then
+
+  end
+
+  --get temperature
+  local temp = connectedEntity.temperature
+  if temp then
+    signals[signalIndex] = {index = signalIndex, signal = signal_temperature ,count = floor(temp+0.5)}
+    signalIndex = signalIndex+1
   end
 
   -- get all fluids
@@ -368,23 +374,39 @@ function UpdateSensor(itemSensor)
   end
 
   -- get items in all inventories
-  for _, inv in pairs(itemSensor.Inventory) do
+  for inv_index, inv in pairs(itemSensor.Inventory) do
     local contentsTable = inv.get_contents()
     for k,v in pairs(contentsTable) do
       signals[signalIndex] = { index = signalIndex, signal = {type = "item",name = k}, count = v }
       signalIndex = signalIndex+1
+      -- add fuel values for items in fuel inventory
+      if burner and inv_index == defines.inventory.fuel then
+        remaining_fuel = remaining_fuel + (global.fuel_values[k] * v)
+      end
     end
+  end
+
+  -- get remaining fuel from burner
+  if burner then
+    if burner.remaining_burning_fuel > 0 then -- remaining_burning_fuel can be negative for some reason
+      remaining_fuel = remaining_fuel + burner.remaining_burning_fuel / 1000000 -- game reports J we use MJ
+    end
+
+    signals[signalIndex] = {index = signalIndex, signal = signal_fuel ,count = floor(remaining_fuel + 0.5)}
+    signalIndex = signalIndex+1
   end
 
   -- get equipment grids if available
   if Read_Grid and connectedEntity.grid then
-    -- log("Grid contents:\n"..serpent.block(connectedEntity.grid.get_contents()))
     -- grid.get_contents() returns equipment.name while signal needs item.name
     local grid_equipment = connectedEntity.grid.equipment
+    local items = {}
     for _, equipment in pairs(grid_equipment) do
-      local item_name = equipment.prototype.take_result.name
-      -- adding a signal with count 1 per equipment and letting factorio group them seems to be slightly faster than grouping in lua
-      signals[signalIndex] = { index = signalIndex, signal = {type = "item",name = item_name}, count = 1 }
+      local name = equipment.prototype.take_result.name
+      items[name] = (items[name] or 0) + 1
+    end
+    for k, v in pairs(items) do
+      signals[signalIndex] = { index = signalIndex, signal = {type = "item",name = k}, count = v }
       signalIndex = signalIndex+1
     end
   end
@@ -394,6 +416,17 @@ end
 
 ---- INIT ----
 do
+
+local function init_globals()
+  -- use MJ instead of J, won't run into int overflow as easily and is in line with fuel tooltip
+  global.fuel_values = {}
+  for name, item in pairs(game.item_prototypes) do
+    if item.fuel_category then
+      global.fuel_values[name] = item.fuel_value / 1000000
+    end
+  end
+end
+
 local function init_events()
   script.on_event({defines.events.on_built_entity, defines.events.on_robot_built_entity}, OnEntityCreated)
   if global.ItemSensors and #global.ItemSensors > 0 then
@@ -408,15 +441,18 @@ end)
 
 script.on_init(function()
   global.ItemSensors = global.ItemSensors or {}
+  init_globals()
   ResetStride()
   init_events()
+  log(MOD_NAME.." "..tostring(game.active_mods[MOD_NAME]).." initialized.")
 end)
 
 script.on_configuration_changed(function(data)
+  init_globals()
   ResetSensors()
   ResetStride()
   init_events()
-  log("[IS] on_config_changed complete.")
+  log(MOD_NAME.." migration from "..tostring(data.mod_changes[MOD_NAME].old_version).." to "..tostring(data.mod_changes[MOD_NAME].new_version).." complete.")
 end)
 
 end
