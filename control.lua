@@ -452,7 +452,9 @@ script.on_configuration_changed(function(data)
   ResetSensors()
   ResetStride()
   init_events()
-  log(MOD_NAME.." migration from "..tostring(data.mod_changes[MOD_NAME].old_version).." to "..tostring(data.mod_changes[MOD_NAME].new_version).." complete.")
+  if data.mod_changes[MOD_NAME] then
+    log(MOD_NAME.." migration from "..tostring(data.mod_changes[MOD_NAME].old_version).." to "..tostring(data.mod_changes[MOD_NAME].new_version).." complete.")
+  end
 end)
 
 end
