@@ -1,9 +1,8 @@
+
+
+-- add to circuit-network-2 if exists otherwise create tech
 if data.raw["technology"]["circuit-network-2"] then
-  table.insert( data.raw["technology"]["circuit-network"].effects,
-    {
-        type = "unlock-recipe",
-        recipe = "item-sensor"
-    } )  
+  table.insert( data.raw["technology"]["circuit-network"].effects, { type = "unlock-recipe", recipe = "item-sensor" } )  
 else
   data:extend({
     {
@@ -14,10 +13,7 @@ else
       prerequisites = {"circuit-network", "advanced-electronics"},
       effects =
       {
-        {
-          type = "unlock-recipe",
-          recipe = "item-sensor"
-        }
+        { type = "unlock-recipe", recipe = "item-sensor" },
       },
       unit =
       {
