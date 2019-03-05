@@ -1,4 +1,10 @@
 ---------------------------------------------------------------------------------------------------
+Version: 1.7.1
+Date: 5.3.2019
+  Changes:
+    - changed recipe to coper wire and electronic circuits
+    - moved recipe into circuit combinators 2
+---------------------------------------------------------------------------------------------------
 Version: 1.7.0
 Date: 27.2.2019
   Features:
