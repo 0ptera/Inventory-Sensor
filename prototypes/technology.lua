@@ -2,7 +2,7 @@
 
 -- add to circuit-network-2 if exists otherwise create tech
 if data.raw["technology"]["circuit-network-2"] then
-  table.insert( data.raw["technology"]["circuit-network"].effects, { type = "unlock-recipe", recipe = "item-sensor" } )  
+  table.insert( data.raw["technology"]["circuit-network-2"].effects, { type = "unlock-recipe", recipe = "item-sensor" } )  
 else
   data:extend({
     {
