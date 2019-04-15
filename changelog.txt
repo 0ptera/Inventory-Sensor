@@ -1,6 +1,10 @@
 ---------------------------------------------------------------------------------------------------
 Version: 1.7.3
-Date: 2019-03-21
+Date: 2019-04-15
+  Features:
+    - read fluids from storage tanks
+    - read fluids from boilers
+    - read fluids from generators like steam engine
   Changes:
     - moved scanner into subgroup with other combinators unlocked by circuit network 2
 ---------------------------------------------------------------------------------------------------

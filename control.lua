@@ -16,6 +16,9 @@ local WAGONFLUID = "fluid-wagon"
 local WAGONARTILLERY = "artillery-wagon"
 local CAR = "car"
 local TANK = "tank"
+local BOILER = "boiler"
+local GENERATOR = "generator"
+local STORAGE_TANK = "storage-tank"
 
 -- initialize variables
 local SupportedTypes = {
@@ -32,6 +35,9 @@ local SupportedTypes = {
   [WAGON] = false,
   [WAGONFLUID] = false,
   [WAGONARTILLERY] = false,
+  [BOILER] = true,
+  [GENERATOR] = true,
+  [STORAGE_TANK] = true,
 }
 
 local parameter_locomotive = {index=1, signal={type="virtual",name="inv-sensor-detected-locomotive"}, count=1}
@@ -352,8 +358,6 @@ function UpdateSensor(itemSensor)
 
     signals[signalIndex] = {index = signalIndex, signal = signal_progress, count = parts}
     signalIndex = signalIndex+1
-
-  -- elseif connectedEntity.type == REACTOR then
 
   end
 
