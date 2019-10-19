@@ -40,6 +40,19 @@ local SupportedTypes = {
   [STORAGE_TANK] = true,
 }
 
+local Entity_Blacklist = {
+  -- filter helper entities from helicopters
+  ["heli-flying-collision-entity-_-"] = true,
+  ["heli-landed-collision-side-entity-_-"] = true,
+  ["heli-landed-collision-end-entity-_-"] = true,
+  ["heli-body-entity-_-"] = true,
+  ["heli-shadow-entity-_-"] = true,
+  ["heli-burner-entity-_-"] = true,
+  ["heli-floodlight-entity-_-"] = true,
+  ["rotor-entity-_-"] = true,
+  ["rotor-shadow-entity-_-"] = true,
+}
+
 local parameter_locomotive = {index=1, signal={type="virtual",name="inv-sensor-detected-locomotive"}, count=1}
 local parameter_wagon = {index=1, signal={type="virtual",name="inv-sensor-detected-wagon"}, count=1}
 local parameter_car = {index=1, signal={type="virtual",name="inv-sensor-detected-car"}, count=1}
@@ -236,7 +249,7 @@ function SetConnectedEntity(itemSensor)
   if connectedEntities then
     for i=1, #connectedEntities do
       local entity = connectedEntities[i]
-      if entity.valid and SupportedTypes[entity.type] ~= nil then
+      if entity.valid and SupportedTypes[entity.type] ~= nil and not Entity_Blacklist[entity.name] then
         -- log("[IS] Sensor "..itemSensor.Sensor.unit_number.." found entity "..tostring(entity.type))
         if itemSensor.ConnectedEntity ~= entity then
           SetInventories(itemSensor, entity)
