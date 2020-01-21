@@ -34,8 +34,8 @@ data:extend({
     type = "virtual-signal",
     name = "inv-sensor-detected-car",
     icons = {
-      { icon = "__base__/graphics/icons/signal/signal_green.png", icon_size = 32 },
-      { icon = "__base__/graphics/icons/car.png", icon_size = 32, scale = 0.75 },
+      { icon = "__base__/graphics/icons/signal/signal_green.png", icon_size = 64, icon_mipmaps = 4 },
+      { icon = "__base__/graphics/icons/car.png", icon_size = 64, icon_mipmaps = 4, scale = 0.375 },
     },
     subgroup = "sensor-signals",
     order = "x[sensor-signals]-da"
@@ -44,8 +44,8 @@ data:extend({
     type = "virtual-signal",
     name = "inv-sensor-detected-tank",
     icons = {
-      { icon = "__base__/graphics/icons/signal/signal_green.png", icon_size = 32 },
-      { icon = "__base__/graphics/icons/tank.png", icon_size = 32, scale = 0.75 },
+      { icon = "__base__/graphics/icons/signal/signal_green.png", icon_size = 64, icon_mipmaps = 4 },
+      { icon = "__base__/graphics/icons/tank.png", icon_size = 64, icon_mipmaps = 4, scale = 0.375 },
     },
     subgroup = "sensor-signals",
     order = "x[sensor-signals]-db"
@@ -54,8 +54,8 @@ data:extend({
     type = "virtual-signal",
     name = "inv-sensor-detected-wagon",
     icons = {
-      { icon = "__base__/graphics/icons/signal/signal_green.png", icon_size = 32 },
-      { icon = "__base__/graphics/icons/cargo-wagon.png", icon_size = 32, scale = 0.75 },
+      { icon = "__base__/graphics/icons/signal/signal_green.png", icon_size = 64, icon_mipmaps = 4 },
+      { icon = "__base__/graphics/icons/cargo-wagon.png", icon_size = 64, icon_mipmaps = 4, scale = 0.375 },
     },
     subgroup = "sensor-signals",
     order = "x[sensor-signals]-dd"
@@ -64,8 +64,8 @@ data:extend({
     type = "virtual-signal",
     name = "inv-sensor-detected-locomotive",
     icons = {
-      { icon = "__base__/graphics/icons/signal/signal_green.png", icon_size = 32 },
-      { icon = "__base__/graphics/icons/diesel-locomotive.png", icon_size = 32, scale = 0.75 },
+      { icon = "__base__/graphics/icons/signal/signal_green.png", icon_size = 64, icon_mipmaps = 4 },
+      { icon = "__base__/graphics/icons/locomotive.png", icon_size = 64, icon_mipmaps = 4, scale = 0.375 },
     },
     subgroup = "sensor-signals",
     order = "x[sensor-signals]-dc"
