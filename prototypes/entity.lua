@@ -2,6 +2,7 @@ local inv_sensor = table.deepcopy(data.raw["constant-combinator"]["constant-comb
 inv_sensor.name = "item-sensor"
 inv_sensor.icon = "__Inventory Sensor__/graphics/icons/inventory-sensor.png"
 inv_sensor.icon_size = 32
+inv_sensor.icon_mipmaps = nil
 inv_sensor.minable.result = "item-sensor"
 inv_sensor.sprites = make_4way_animation_from_spritesheet(
   { layers =
@@ -44,6 +45,6 @@ inv_sensor.sprites = make_4way_animation_from_spritesheet(
   })
 
 inv_sensor.item_slot_count = 1000
-    
-    
+
+
 data:extend({ inv_sensor })
