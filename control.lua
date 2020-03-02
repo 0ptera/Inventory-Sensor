@@ -162,11 +162,15 @@ function OnTick(event)
     for i=global.SensorIndex, lastIndex do
       local itemSensor = global.ItemSensors[i]
       -- log("[IS] skipScan: "..tostring(itemSensor.SkipEntityScanning).." LastScan: "..tostring(itemSensor.LastScanned).."/"..game.tick)
-      if not itemSensor.SkipEntityScanning and (game.tick - itemSensor.LastScanned) >= ScanInterval then
-        SetConnectedEntity(itemSensor)
-      end
 
-      UpdateSensor(itemSensor)
+      if not itemSensor.Sensor.valid then
+          RemoveSensor(itemSensor.ID) -- remove invalidated sensors
+      else
+        if not itemSensor.SkipEntityScanning and (game.tick - itemSensor.LastScanned) >= ScanInterval then
+          SetConnectedEntity(itemSensor)
+        end
+        UpdateSensor(itemSensor)
+      end
     end
     global.SensorIndex = lastIndex + 1
   end
@@ -271,12 +275,6 @@ end
 function UpdateSensor(itemSensor)
   local sensor = itemSensor.Sensor
   local connectedEntity = itemSensor.ConnectedEntity
-
-  -- remove invalidated sensors
-  if not sensor.valid then
-    RemoveSensor(itemSensor.ID)
-    return
-  end
 
   -- clear output of invalid connections
   if not connectedEntity or not connectedEntity.valid or not itemSensor.Inventory then
