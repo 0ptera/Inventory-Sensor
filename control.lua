@@ -16,6 +16,7 @@ local WAGONFLUID = "fluid-wagon"
 local WAGONARTILLERY = "artillery-wagon"
 local CAR = "car"
 local TANK = "tank"
+local SPIDER = "spider-vehicle"
 local BOILER = "boiler"
 local GENERATOR = "generator"
 local STORAGE_TANK = "storage-tank"
@@ -31,6 +32,7 @@ local SupportedTypes = {
   [ARTILLERY] = true,
   [CHEST] = true,
   [CAR] = false,
+  [SPIDER] = false,
   [LOCO] = false,
   [WAGON] = false,
   [WAGONFLUID] = false,
@@ -57,6 +59,7 @@ local parameter_locomotive = {index=1, signal={type="virtual",name="inv-sensor-d
 local parameter_wagon = {index=1, signal={type="virtual",name="inv-sensor-detected-wagon"}, count=1}
 local parameter_car = {index=1, signal={type="virtual",name="inv-sensor-detected-car"}, count=1}
 local parameter_tank = {index=1, signal={type="virtual",name="inv-sensor-detected-tank"}, count=1}
+local parameter_spider = {index=1, signal={type="virtual",name="inv-sensor-detected-spider"}, count=1}
 local signal_progress = {type = "virtual",name = "inv-sensor-progress"}
 local signal_temperature = {type = "virtual",name = "inv-sensor-temperature"}
 local signal_fuel = {type = "virtual",name = "inv-sensor-fuel"}
@@ -336,6 +339,19 @@ function UpdateSensor(itemSensor)
       return
     end
 
+  elseif connectedEntity.type == SPIDER then
+    -- in 1.0 spidertron doesn't have speed exposed
+    if tostring(connectedEntity.speed) == "0" then
+      signals[signalIndex] = parameter_spider
+      signalIndex = 2
+    else -- car is moving > remove connection
+      itemSensor.ConnectedEntity = nil
+      itemSensor.Inventory = {}
+      itemSensor.SkipEntityScanning = false
+      sensor.get_control_behavior().parameters = nil
+      return
+    end
+
   -- special signals
   elseif connectedEntity.type == ASSEMBLER or connectedEntity.type == FURNACE then
     local progress = connectedEntity.crafting_progress
@@ -344,7 +360,7 @@ function UpdateSensor(itemSensor)
       signalIndex = signalIndex+1
     end
 
- elseif connectedEntity.type == LAB then
+  elseif connectedEntity.type == LAB then
     local progress = connectedEntity.force.research_progress
     if progress then
       signals[signalIndex] = {index = signalIndex, signal = signal_progress, count = floor(progress*100)}
@@ -426,7 +442,7 @@ function UpdateSensor(itemSensor)
     end
   end
 
-  sensor.get_control_behavior().parameters = {parameters=signals}
+  sensor.get_control_behavior().parameters = signals
 end
 
 ---- INIT ----

@@ -12,7 +12,7 @@ data:extend({
     icon = "__Inventory Sensor__/graphics/icons/progress.png",
     icon_size = 32,
     subgroup = "sensor-signals",
-    order = "x[sensor-signals]-ba"
+    order = "is-ba"
   },
   {
     type = "virtual-signal",
@@ -20,7 +20,7 @@ data:extend({
     icon = "__Inventory Sensor__/graphics/icons/temperature.png",
     icon_size = 32,
     subgroup = "sensor-signals",
-    order = "x[sensor-signals]-bb"
+    order = "is-bb"
   },
   {
     type = "virtual-signal",
@@ -28,7 +28,7 @@ data:extend({
     icon = "__Inventory Sensor__/graphics/icons/fuel.png",
     icon_size = 32,
     subgroup = "sensor-signals",
-    order = "x[sensor-signals]-bc"
+    order = "is-bc"
   },
   {
     type = "virtual-signal",
@@ -38,7 +38,7 @@ data:extend({
       { icon = "__base__/graphics/icons/car.png", icon_size = 64, icon_mipmaps = 4, scale = 0.375 },
     },
     subgroup = "sensor-signals",
-    order = "x[sensor-signals]-da"
+    order = "is-da"
   },
   {
     type = "virtual-signal",
@@ -48,7 +48,17 @@ data:extend({
       { icon = "__base__/graphics/icons/tank.png", icon_size = 64, icon_mipmaps = 4, scale = 0.375 },
     },
     subgroup = "sensor-signals",
-    order = "x[sensor-signals]-db"
+    order = "is-db"
+  },
+  {
+    type = "virtual-signal",
+    name = "inv-sensor-detected-spider",
+    icons = {
+      { icon = "__base__/graphics/icons/signal/signal_green.png", icon_size = 64, icon_mipmaps = 4 },
+      { icon = "__base__/graphics/icons/spidertron.png", icon_size = 64, icon_mipmaps = 4, scale = 0.375 },
+    },
+    subgroup = "sensor-signals",
+    order = "is-dc"
   },
   {
     type = "virtual-signal",
@@ -58,7 +68,7 @@ data:extend({
       { icon = "__base__/graphics/icons/cargo-wagon.png", icon_size = 64, icon_mipmaps = 4, scale = 0.375 },
     },
     subgroup = "sensor-signals",
-    order = "x[sensor-signals]-dd"
+    order = "is-dd"
   },
   {
     type = "virtual-signal",
@@ -68,6 +78,6 @@ data:extend({
       { icon = "__base__/graphics/icons/locomotive.png", icon_size = 64, icon_mipmaps = 4, scale = 0.375 },
     },
     subgroup = "sensor-signals",
-    order = "x[sensor-signals]-dc"
+    order = "is-dc"
   }
 })
