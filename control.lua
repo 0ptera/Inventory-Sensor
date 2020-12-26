@@ -1,6 +1,7 @@
 -- constant prototypes names
 local MOD_NAME = "Inventory Sensor"
 local SENSOR = "item-sensor"
+local EVENT_FILTER = {{ filter="name", name=SENSOR }}
 
 local ASSEMBLER = "assembling-machine"
 local FURNACE = "furnace"
@@ -116,8 +117,11 @@ function OnEntityCreated(event)
     global.ItemSensors[#global.ItemSensors+1] = itemSensor
 
     if #global.ItemSensors == 1 then
-      script.on_event(defines.events.on_tick, OnTick)
-      script.on_event({defines.events.on_pre_player_mined_item, defines.events.on_robot_pre_mined, defines.events.on_entity_died}, OnEntityRemoved)
+      script.on_event( defines.events.on_tick, OnTick )
+      script.on_event( defines.events.on_pre_player_mined_item, OnEntityRemoved, EVENT_FILTER )
+      script.on_event( defines.events.on_robot_pre_mined, OnEntityRemoved, EVENT_FILTER )
+      script.on_event( defines.events.on_entity_died, OnEntityRemoved, EVENT_FILTER )
+      script.on_event( defines.events.script_raised_destroy, OnEntityRemoved )
     end
 
     ResetStride()
@@ -133,8 +137,13 @@ function RemoveSensor(sensorID)
   end
 
   if #global.ItemSensors == 0 then
-    script.on_event(defines.events.on_tick, nil)
-    script.on_event({defines.events.on_pre_player_mined_item, defines.events.on_robot_pre_mined, defines.events.on_entity_died}, nil)
+    script.on_event( defines.events.on_tick, nil )
+    script.on_event( {
+      defines.events.on_pre_player_mined_item,
+      defines.events.on_robot_pre_mined,
+      defines.events.on_entity_died,
+      defines.events.script_raised_destroy
+    }, nil)
   end
 
   ResetStride()
@@ -459,10 +468,15 @@ local function init_globals()
 end
 
 local function init_events()
-  script.on_event({defines.events.on_built_entity, defines.events.on_robot_built_entity}, OnEntityCreated)
+  script.on_event( defines.events.on_built_entity, OnEntityCreated, EVENT_FILTER )
+  script.on_event( defines.events.on_robot_built_entity, OnEntityCreated, EVENT_FILTER )
+  script.on_event( {defines.events.script_raised_built, defines.events.script_raised_revive}, OnEntityCreated )
   if global.ItemSensors and #global.ItemSensors > 0 then
-    script.on_event(defines.events.on_tick, OnTick)
-    script.on_event({defines.events.on_pre_player_mined_item, defines.events.on_robot_pre_mined, defines.events.on_entity_died}, OnEntityRemoved)
+    script.on_event( defines.events.on_tick, OnTick )
+    script.on_event( defines.events.on_pre_player_mined_item, OnEntityRemoved, EVENT_FILTER )
+    script.on_event( defines.events.on_robot_pre_mined, OnEntityRemoved, EVENT_FILTER )
+    script.on_event( defines.events.on_entity_died, OnEntityRemoved, EVENT_FILTER )
+    script.on_event( defines.events.script_raised_destroy, OnEntityRemoved )
   end
 end
 
