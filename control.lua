@@ -102,8 +102,8 @@ end)
 ---- EVENTS ----
 
 function OnEntityCreated(event)
-  if (event.created_entity.name == SENSOR) then
-    local entity = event.created_entity
+  local entity = event.created_entity or event.entity
+  if entity and entity.valid and entity.name == SENSOR then
     global.ItemSensors = global.ItemSensors or {}
 
     entity.operable = false
@@ -150,9 +150,9 @@ function RemoveSensor(sensorID)
 end
 
 function OnEntityRemoved(event)
--- script.on_event({defines.events.on_pre_player_mined_item, defines.events.on_robot_pre_mined, defines.events.on_entity_died}, function(event)
-  if event.entity.name == SENSOR then
-    RemoveSensor(event.entity.unit_number)
+  local entity = event.entity
+  if entity and entity.valid and entity.name == SENSOR then
+    RemoveSensor(entity.unit_number)
   end
 end
 
