@@ -11,7 +11,7 @@ local ROBOPORT = "roboport"
 local SILO = "rocket-silo"
 local ARTILLERY = "artillery-turret"
 local CHEST = "logistic-container" -- requester: type = "logistic-container" && logistic_mode = "requester"
-local LINKEDCHEST = "linked-container"
+local LINKEDCHEST = "linked-container" -- linked-container is used for example in the mod Space-Exploration. ("Arcolink Storage")
 local LOCO = "locomotive"
 local WAGON = "cargo-wagon"
 local WAGONFLUID = "fluid-wagon"
@@ -238,7 +238,7 @@ end
 
 function GetScanArea(sensor)
   if sensor.direction == 0 then --south
-     return{{sensor.position.x - ScanOffset, sensor.position.y}, {sensor.position.x + ScanOffset, sensor.position.y + ScanRange}}
+    return{{sensor.position.x - ScanOffset, sensor.position.y}, {sensor.position.x + ScanOffset, sensor.position.y + ScanRange}}
   elseif sensor.direction == 2 then --west
     return{{sensor.position.x - ScanRange, sensor.position.y - ScanOffset}, {sensor.position.x, sensor.position.y + ScanOffset}}
   elseif sensor.direction == 4 then --north
