@@ -102,7 +102,7 @@ end)
 ---- EVENTS ----
 
 function OnEntityCreated(event)
-  local entity = event.created_entity or event.entity
+  local entity = event.created_entity or event.entity or event.destination
   if entity and entity.valid and entity.name == SENSOR then
     global.ItemSensors = global.ItemSensors or {}
 
@@ -470,6 +470,7 @@ end
 local function init_events()
   script.on_event( defines.events.on_built_entity, OnEntityCreated, EVENT_FILTER )
   script.on_event( defines.events.on_robot_built_entity, OnEntityCreated, EVENT_FILTER )
+  script.on_event( defines.events.on_entity_cloned, OnEntityCreated, EVENT_FILTER )
   script.on_event( {defines.events.script_raised_built, defines.events.script_raised_revive}, OnEntityCreated )
   if global.ItemSensors and #global.ItemSensors > 0 then
     script.on_event( defines.events.on_tick, OnTick )
