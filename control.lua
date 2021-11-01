@@ -11,6 +11,7 @@ local ROBOPORT = "roboport"
 local SILO = "rocket-silo"
 local ARTILLERY = "artillery-turret"
 local CHEST = "logistic-container" -- requester: type = "logistic-container" && logistic_mode = "requester"
+local LINKEDCHEST = "linked-container"
 local LOCO = "locomotive"
 local WAGON = "cargo-wagon"
 local WAGONFLUID = "fluid-wagon"
@@ -32,6 +33,7 @@ local SupportedTypes = {
   [SILO] = true,
   [ARTILLERY] = true,
   [CHEST] = true,
+  [LINKEDCHEST] = true,
   [CAR] = false,
   [SPIDER] = false,
   [LOCO] = false,
