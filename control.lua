@@ -69,6 +69,8 @@ local signal_fuel = {type = "virtual",name = "inv-sensor-fuel"}
 
 local floor = math.floor
 local ceil = math.ceil
+local min = math.min
+local max = math.max
 
 
 ---- MOD SETTINGS ----
@@ -253,12 +255,12 @@ end
 function SetConnectedEntity(itemSensor)
   itemSensor.LastScanned = game.tick
   local connectedEntities = itemSensor.Sensor.surface.find_entities(itemSensor.ScanArea)
-  --printmsg("[IS] Found "..#connectedEntities.." entities in direction "..sensor.direction)
+  -- log("DEBUG: Found "..#connectedEntities.." entities in direction "..itemSensor.Sensor.direction)
   if connectedEntities then
     for i=1, #connectedEntities do
       local entity = connectedEntities[i]
       if entity.valid and SupportedTypes[entity.type] ~= nil and not Entity_Blacklist[entity.name] then
-        -- log("[IS] Sensor "..itemSensor.Sensor.unit_number.." found entity "..tostring(entity.type))
+        -- log("DEBUG: Sensor "..itemSensor.Sensor.unit_number.." found entity "..tostring(entity.type).." "..tostring(entity.name))
         if itemSensor.ConnectedEntity ~= entity then
           SetInventories(itemSensor, entity)
         end
@@ -269,7 +271,7 @@ function SetConnectedEntity(itemSensor)
     end
   end
   -- if no entity was found remove stored data
-  -- log("[IS] Sensor "..itemSensor.Sensor.unit_number.." no entity found")
+  -- log("DEBUG: Sensor "..itemSensor.Sensor.unit_number.." no entity found")
   itemSensor.ConnectedEntity = nil
   itemSensor.SkipEntityScanning = false
   itemSensor.Inventory = {}
@@ -424,7 +426,7 @@ function UpdateSensor(itemSensor)
       remaining_fuel = remaining_fuel + burner.remaining_burning_fuel / 1000000 -- game reports J we use MJ
     end
 
-    signals[signalIndex] = {index = signalIndex, signal = signal_fuel ,count = floor(remaining_fuel + 0.5)}
+    signals[signalIndex] = {index = signalIndex, signal = signal_fuel ,count = min(floor(remaining_fuel + 0.5), 2147483647)}
     signalIndex = signalIndex+1
   end
 
