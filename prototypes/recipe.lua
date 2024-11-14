@@ -4,12 +4,15 @@ data:extend({
     name = "item-sensor",
     icon = "__Inventory Sensor__/graphics/icons/inventory-sensor.png",
     icon_size = 32,
-    enabled = "false",
+    enabled = false,
     ingredients =
     {
-      {"copper-cable", 5},
-      {"electronic-circuit", 5},
+      { type = 'item', name = "copper-cable", amount = 5 },
+      { type = 'item', name = "electronic-circuit", amount = 5 },
     },
-    result = "item-sensor"
+    results =
+    {
+      { type = 'item', name = "item-sensor", amount = 1 },
+    },
   }
 })

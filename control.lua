@@ -22,6 +22,7 @@ local SPIDER = "spider-vehicle"
 local BOILER = "boiler"
 local GENERATOR = "generator"
 local STORAGE_TANK = "storage-tank"
+local CARGO_LANDING_PAD = 'cargo-landing-pad'
 
 -- initialize variables
 local SupportedTypes = {
@@ -43,6 +44,7 @@ local SupportedTypes = {
   [BOILER] = true,
   [GENERATOR] = true,
   [STORAGE_TANK] = true,
+  [CARGO_LANDING_PAD] = true,
 }
 
 local Entity_Blacklist = {
@@ -58,14 +60,22 @@ local Entity_Blacklist = {
   ["rotor-shadow-entity-_-"] = true,
 }
 
-local parameter_locomotive = {index=1, signal={type="virtual",name="inv-sensor-detected-locomotive"}, count=1}
-local parameter_wagon = {index=1, signal={type="virtual",name="inv-sensor-detected-wagon"}, count=1}
-local parameter_car = {index=1, signal={type="virtual",name="inv-sensor-detected-car"}, count=1}
-local parameter_tank = {index=1, signal={type="virtual",name="inv-sensor-detected-tank"}, count=1}
-local parameter_spider = {index=1, signal={type="virtual",name="inv-sensor-detected-spider"}, count=1}
-local signal_progress = {type = "virtual",name = "inv-sensor-progress"}
-local signal_temperature = {type = "virtual",name = "inv-sensor-temperature"}
-local signal_fuel = {type = "virtual",name = "inv-sensor-fuel"}
+---@type LogisticFilter
+local parameter_locomotive = {value={type="virtual",name="inv-sensor-detected-locomotive", quality='normal'}, min=1}
+---@type LogisticFilter
+local parameter_wagon = {value={type="virtual",name="inv-sensor-detected-wagon", quality='normal'}, min=1}
+---@type LogisticFilter
+local parameter_car = {value={type="virtual",name="inv-sensor-detected-car", quality='normal'}, min=1}
+---@type LogisticFilter
+local parameter_tank = {value={type="virtual",name="inv-sensor-detected-tank", quality='normal'}, min=1}
+---@type LogisticFilter
+local parameter_spider = {value={type="virtual",name="inv-sensor-detected-spider", quality='normal'}, min=1}
+---@type SignalFilter
+local signal_progress = {type = "virtual",name = "inv-sensor-progress", quality='normal'}
+---@type SignalFilter
+local signal_temperature = {type = "virtual",name = "inv-sensor-temperature", quality='normal'}
+---@type SignalFilter
+local signal_fuel = {type = "virtual",name = "inv-sensor-fuel", quality='normal'}
 
 local floor = math.floor
 local ceil = math.ceil
@@ -108,19 +118,19 @@ end)
 function OnEntityCreated(event)
   local entity = event.created_entity or event.entity or event.destination
   if entity and entity.valid and entity.name == SENSOR then
-    global.ItemSensors = global.ItemSensors or {}
+    storage.ItemSensors = storage.ItemSensors or {}
 
     entity.operable = false
-    entity.rotatable = false
+    entity.rotatable = true
     local itemSensor = {}
     itemSensor.ID = entity.unit_number
     itemSensor.Sensor = entity
     itemSensor.ScanArea = GetScanArea(entity)
     SetConnectedEntity(itemSensor)
 
-    global.ItemSensors[#global.ItemSensors+1] = itemSensor
+    storage.ItemSensors[#storage.ItemSensors+1] = itemSensor
 
-    if #global.ItemSensors > 0 then
+    if #storage.ItemSensors > 0 then
       script.on_event( defines.events.on_tick, OnTick )
     end
 
@@ -130,13 +140,13 @@ end
 
 -- called from on_entity_removed and when entity becomes invalid
 function RemoveSensor(sensorID)
-  for i=#global.ItemSensors, 1, -1 do
-    if global.ItemSensors[i].ID == sensorID then
-      table.remove(global.ItemSensors,i)
+  for i=#storage.ItemSensors, 1, -1 do
+    if storage.ItemSensors[i].ID == sensorID then
+      table.remove(storage.ItemSensors,i)
     end
   end
 
-  if #global.ItemSensors == 0 then
+  if #storage.ItemSensors == 0 then
     script.on_event( defines.events.on_tick, nil )
   end
 
@@ -150,23 +160,39 @@ function OnEntityRemoved(event)
   end
 end
 
+function OnEntityRotated(event)
+  local entity = event.entity
+  if entity and entity.valid and entity.name == SENSOR then
+    storage.ItemSensors = storage.ItemSensors or {}
+    for i=1, #storage.ItemSensors do
+      local itemSensor = storage.ItemSensors[i]
+      if itemSensor.ID == event.entity.unit_number then
+        itemSensor.ScanArea = GetScanArea(itemSensor.Sensor)
+        itemSensor.ConnectedEntity = nil
+        itemSensor.Inventory = {}
+        SetConnectedEntity(itemSensor)
+      end
+    end
+  end
+end  
+
 
 -- grouped stepping by Optera
 -- 91307.27ms on 100k ticks
 function OnTick(event)
-  global.tickCount = global.tickCount or 1
-  global.SensorIndex = global.SensorIndex or 1
+  storage.tickCount = storage.tickCount or 1
+  storage.SensorIndex = storage.SensorIndex or 1
 
   -- only work if index is within bounds
-  if global.SensorIndex <= #global.ItemSensors then
-    local lastIndex = global.SensorIndex + global.SensorStride - 1
-    if lastIndex >= #global.ItemSensors then
-      lastIndex = #global.ItemSensors
+  if storage.SensorIndex <= #storage.ItemSensors then
+    local lastIndex = storage.SensorIndex + storage.SensorStride - 1
+    if lastIndex >= #storage.ItemSensors then
+      lastIndex = #storage.ItemSensors
     end
 
-    -- log("[IS] "..global.tickCount.." / "..game.tick.." updating sensors "..global.SensorIndex.." to "..lastIndex)
-    for i=global.SensorIndex, lastIndex do
-      local itemSensor = global.ItemSensors[i]
+    -- log("[IS] "..storage.tickCount.." / "..game.tick.." updating sensors "..storage.SensorIndex.." to "..lastIndex)
+    for i=storage.SensorIndex, lastIndex do
+      local itemSensor = storage.ItemSensors[i]
       -- log("[IS] skipScan: "..tostring(itemSensor.SkipEntityScanning).." LastScan: "..tostring(itemSensor.LastScanned).."/"..game.tick)
 
       if not itemSensor.Sensor.valid then
@@ -178,15 +204,15 @@ function OnTick(event)
         UpdateSensor(itemSensor)
       end
     end
-    global.SensorIndex = lastIndex + 1
+    storage.SensorIndex = lastIndex + 1
   end
 
   -- reset clock and index
-  if global.tickCount < UpdateInterval then
-    global.tickCount = global.tickCount + 1
+  if storage.tickCount < UpdateInterval then
+    storage.tickCount = storage.tickCount + 1
   else
-    global.tickCount = 1
-    global.SensorIndex = 1
+    storage.tickCount = 1
+    storage.SensorIndex = 1
   end
 end
 
@@ -194,8 +220,8 @@ end
 -- 93048.58ms on 100k ticks: 1.9% slower than grouped stepping
 -- function OnTick(event)
   -- local offset = event.tick % UpdateInterval
-  -- for i=#global.ItemSensors - offset, 1, -1 * UpdateInterval do
-    -- local itemSensor = global.ItemSensors[i]
+  -- for i=#storage.ItemSensors - offset, 1, -1 * UpdateInterval do
+    -- local itemSensor = storage.ItemSensors[i]
     -- if not itemSensor.SkipEntityScanning and (event.tick - itemSensor.LastScanned) >= ScanInterval then
       -- SetConnectedEntity(itemSensor)
     -- end
@@ -207,21 +233,22 @@ end
 
 -- recalculates how many sensors are updated each tick
 function ResetStride()
-  if #global.ItemSensors > UpdateInterval then
-    global.SensorStride =  ceil(#global.ItemSensors/UpdateInterval)
+  if #storage.ItemSensors > UpdateInterval then
+    storage.SensorStride =  ceil(#storage.ItemSensors/UpdateInterval)
   else
-    global.SensorStride = 1
+    storage.SensorStride = 1
   end
-  -- log("[IS] stride set to "..global.SensorStride)
+  -- log("[IS] stride set to "..storage.SensorStride)
 end
 
 
 function ResetSensors()
-  global.ItemSensors = global.ItemSensors or {}
-  for i=1, #global.ItemSensors do
-    local itemSensor = global.ItemSensors[i]
+  storage.ItemSensors = storage.ItemSensors or {}
+  for i=1, #storage.ItemSensors do
+    local itemSensor = storage.ItemSensors[i]
     itemSensor.ID = itemSensor.Sensor.unit_number
     itemSensor.ScanArea = GetScanArea(itemSensor.Sensor)
+    itemSensor.SkipEntityScanning = false
     itemSensor.ConnectedEntity = nil
     itemSensor.Inventory = {}
     SetConnectedEntity(itemSensor)
@@ -229,13 +256,13 @@ function ResetSensors()
 end
 
 function GetScanArea(sensor)
-  if sensor.direction == 0 then --south
+  if sensor.direction == defines.direction.north then
     return{{sensor.position.x - ScanOffset, sensor.position.y}, {sensor.position.x + ScanOffset, sensor.position.y + ScanRange}}
-  elseif sensor.direction == 2 then --west
+  elseif sensor.direction == defines.direction.east then
     return{{sensor.position.x - ScanRange, sensor.position.y - ScanOffset}, {sensor.position.x, sensor.position.y + ScanOffset}}
-  elseif sensor.direction == 4 then --north
+  elseif sensor.direction == defines.direction.south then
     return{{sensor.position.x - ScanOffset, sensor.position.y - ScanRange}, {sensor.position.x + ScanOffset, sensor.position.y}}
-  elseif sensor.direction == 6 then --east
+  elseif sensor.direction == defines.direction.west then
     return{{sensor.position.x, sensor.position.y - ScanOffset}, {sensor.position.x + ScanRange, sensor.position.y + ScanOffset}}
   end
 end
@@ -254,6 +281,13 @@ end
 
 function SetConnectedEntity(itemSensor)
   itemSensor.LastScanned = game.tick
+--   rendering.draw_rectangle {
+--     color = {r=1},
+--     surface = itemSensor.Sensor.surface,
+--     left_top = itemSensor.ScanArea[1],
+--     right_bottom = itemSensor.ScanArea[2],
+--     time_to_live = 10,
+--   }
   local connectedEntities = itemSensor.Sensor.surface.find_entities(itemSensor.ScanArea)
   -- log("DEBUG: Found "..#connectedEntities.." entities in direction "..itemSensor.Sensor.direction)
   if connectedEntities then
@@ -288,12 +322,15 @@ function UpdateSensor(itemSensor)
     itemSensor.Inventory = {}
     itemSensor.SkipEntityScanning = false
     itemSensor.SiloStatus = nil
-    sensor.get_control_behavior().parameters = nil
+    local control_behavior = sensor.get_control_behavior() --[[@as LuaConstantCombinatorControlBehavior ]]
+    local section = control_behavior.get_section(1)
+    section.filters = {}
     return
   end
 
   local burner = connectedEntity.burner -- caching burner makes no difference in performance
   local remaining_fuel = 0
+  ---@type LogisticFilter[]
   local signals = {}
   local signalIndex = 1
 
@@ -308,8 +345,10 @@ function UpdateSensor(itemSensor)
       itemSensor.ConnectedEntity = nil
       itemSensor.Inventory = {}
       itemSensor.SkipEntityScanning = false
-      sensor.get_control_behavior().parameters = nil
-      return
+      local control_behavior = sensor.get_control_behavior() --[[@as LuaConstantCombinatorControlBehavior ]]
+      local section = control_behavior.get_section(1)
+      section.filters = {}
+        return
     end
 
   elseif connectedEntity.type == WAGON or connectedEntity.type == WAGONFLUID or connectedEntity.type == WAGONARTILLERY then
@@ -322,7 +361,9 @@ function UpdateSensor(itemSensor)
       itemSensor.ConnectedEntity = nil
       itemSensor.Inventory = {}
       itemSensor.SkipEntityScanning = false
-      sensor.get_control_behavior().parameters = nil
+      local control_behavior = sensor.get_control_behavior() --[[@as LuaConstantCombinatorControlBehavior ]]
+      local section = control_behavior.get_section(1)
+      section.filters = {}
       return
     end
 
@@ -338,7 +379,9 @@ function UpdateSensor(itemSensor)
       itemSensor.ConnectedEntity = nil
       itemSensor.Inventory = {}
       itemSensor.SkipEntityScanning = false
-      sensor.get_control_behavior().parameters = nil
+      local control_behavior = sensor.get_control_behavior() --[[@as LuaConstantCombinatorControlBehavior ]]
+      local section = control_behavior.get_section(1)
+      section.filters = {}
       return
     end
 
@@ -351,7 +394,9 @@ function UpdateSensor(itemSensor)
       itemSensor.ConnectedEntity = nil
       itemSensor.Inventory = {}
       itemSensor.SkipEntityScanning = false
-      sensor.get_control_behavior().parameters = nil
+      local control_behavior = sensor.get_control_behavior() --[[@as LuaConstantCombinatorControlBehavior ]]
+      local section = control_behavior.get_section(1)
+      section.filters = {}
       return
     end
 
@@ -359,14 +404,14 @@ function UpdateSensor(itemSensor)
   elseif connectedEntity.type == ASSEMBLER or connectedEntity.type == FURNACE then
     local progress = connectedEntity.crafting_progress
     if progress then
-      signals[signalIndex] = {index = signalIndex, signal = signal_progress, count = floor(progress*100)}
+      signals[signalIndex] = {value = signal_progress, min = floor(progress*100)}
       signalIndex = signalIndex+1
     end
 
   elseif connectedEntity.type == LAB then
     local progress = connectedEntity.force.research_progress
     if progress then
-      signals[signalIndex] = {index = signalIndex, signal = signal_progress, count = floor(progress*100)}
+      signals[signalIndex] = {value = signal_progress, min = floor(progress*100)}
       signalIndex = signalIndex+1
     end
 
@@ -386,7 +431,7 @@ function UpdateSensor(itemSensor)
     end
     if itemSensor.SiloStatus and parts == 0 then parts = 100 end
 
-    signals[signalIndex] = {index = signalIndex, signal = signal_progress, count = parts}
+    signals[signalIndex] = {value = signal_progress, min = parts}
     signalIndex = signalIndex+1
 
   end
@@ -394,15 +439,16 @@ function UpdateSensor(itemSensor)
   --get temperature
   local temp = connectedEntity.temperature
   if temp then
-    signals[signalIndex] = {index = signalIndex, signal = signal_temperature ,count = floor(temp+0.5)}
+    signals[signalIndex] = {value = signal_temperature ,min = floor(temp+0.5)}
     signalIndex = signalIndex+1
   end
 
   -- get all fluids
-  for i=1, #connectedEntity.fluidbox, 1 do
-    local fluid = connectedEntity.fluidbox[i]
+  
+  for i=1, connectedEntity.fluids_count, 1 do
+    local fluid = connectedEntity.get_fluid(i)
     if fluid then
-      signals[signalIndex] = { index = signalIndex, signal = {type = "fluid",name = fluid.name}, count = ceil(fluid.amount) }
+      signals[signalIndex] = { value = {type = "fluid", name = fluid.name, quality='normal' }, min = ceil(fluid.amount) }
       signalIndex = signalIndex+1
     end
   end
@@ -410,12 +456,12 @@ function UpdateSensor(itemSensor)
   -- get items in all inventories
   for inv_index, inv in pairs(itemSensor.Inventory) do
     local contentsTable = inv.get_contents()
-    for k,v in pairs(contentsTable) do
-      signals[signalIndex] = { index = signalIndex, signal = {type = "item",name = k}, count = v }
+    for _, entry in pairs(contentsTable) do
+      signals[signalIndex] = { value = {type = "item", name = entry.name, quality = entry.quality }, min = entry.count }
       signalIndex = signalIndex+1
       -- add fuel values for items in fuel inventory
       if burner and inv_index == defines.inventory.fuel then
-        remaining_fuel = remaining_fuel + (global.fuel_values[k] * v)
+        remaining_fuel = remaining_fuel + (storage.fuel_values[entry.name] * entry.count)
       end
     end
   end
@@ -426,7 +472,7 @@ function UpdateSensor(itemSensor)
       remaining_fuel = remaining_fuel + burner.remaining_burning_fuel / 1000000 -- game reports J we use MJ
     end
 
-    signals[signalIndex] = {index = signalIndex, signal = signal_fuel ,count = min(floor(remaining_fuel + 0.5), 2147483647)}
+    signals[signalIndex] = {value = signal_fuel ,min = min(floor(remaining_fuel + 0.5), 2147483647)}
     signalIndex = signalIndex+1
   end
 
@@ -440,12 +486,18 @@ function UpdateSensor(itemSensor)
       items[name] = (items[name] or 0) + 1
     end
     for k, v in pairs(items) do
-      signals[signalIndex] = { index = signalIndex, signal = {type = "item",name = k}, count = v }
+      signals[signalIndex] = { value = {type = "item",name = k}, min = v }
       signalIndex = signalIndex+1
     end
   end
 
-  sensor.get_control_behavior().parameters = signals
+  local control_behavior = sensor.get_control_behavior() --[[@as LuaConstantCombinatorControlBehavior ]]
+  local section = control_behavior.get_section(1)
+  assert(section)
+  section.filters = {}
+  for idx, signal in pairs(signals) do
+    section.set_slot(idx, signal)
+  end
 end
 
 ---- INIT ----
@@ -453,10 +505,10 @@ do
 
 local function init_globals()
   -- use MJ instead of J, won't run into int overflow as easily and is in line with fuel tooltip
-  global.fuel_values = {}
-  for name, item in pairs(game.item_prototypes) do
+  storage.fuel_values = {}
+  for name, item in pairs(prototypes.item) do
     if item.fuel_category then
-      global.fuel_values[name] = item.fuel_value / 1000000
+      storage.fuel_values[name] = item.fuel_value / 1000000
     end
   end
 end
@@ -472,7 +524,9 @@ local function init_events()
   script.on_event( defines.events.on_entity_died, OnEntityRemoved, EVENT_FILTER )
   script.on_event( defines.events.script_raised_destroy, OnEntityRemoved )
 
-  if global.ItemSensors and #global.ItemSensors > 0 then
+  script.on_event( defines.events.on_player_rotated_entity, OnEntityRotated )
+
+  if storage.ItemSensors and #storage.ItemSensors > 0 then
     script.on_event( defines.events.on_tick, OnTick )
   end
 end
@@ -482,11 +536,11 @@ script.on_load(function()
 end)
 
 script.on_init(function()
-  global.ItemSensors = global.ItemSensors or {}
+  storage.ItemSensors = storage.ItemSensors or {}
   init_globals()
   ResetStride()
   init_events()
-  log(MOD_NAME.." "..tostring(game.active_mods[MOD_NAME]).." initialized.")
+  log(MOD_NAME.." "..tostring(script.active_mods[MOD_NAME]).." initialized.")
 end)
 
 script.on_configuration_changed(function(data)
