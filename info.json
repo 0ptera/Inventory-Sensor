@@ -2,7 +2,7 @@
   "name": "Inventory Sensor",
   "version": "2.0.0",
   "title": "Inventory Sensor",
-  "author": "Optera",
+  "author": "Optera, hgschmie",
   "contact": "https://forums.factorio.com/memberlist.php?mode=viewprofile&u=21729",
   "homepage": "https://forums.factorio.com/viewtopic.php?f=97&t=30454",
   "description": "Adds a combinator that reads inventories, fuel and equipment grid of locomotives, wagons, cars, furnaces, assemblers, roboports, rocket silos and reactors.",
